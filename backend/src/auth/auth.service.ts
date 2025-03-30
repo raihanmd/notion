@@ -1,6 +1,6 @@
 import * as bcrypt from "bcrypt";
 import {
-  ForbiddenException,
+  ConflictException,
   Injectable,
   UnauthorizedException,
 } from "@nestjs/common";
@@ -36,7 +36,7 @@ export class AuthService {
       },
     });
 
-    if (isUserExist) throw new ForbiddenException("User already exist");
+    if (isUserExist) throw new ConflictException("User already exist");
 
     registerUser.password = await bcrypt.hash(
       registerUser.password as string,

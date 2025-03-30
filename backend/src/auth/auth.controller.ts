@@ -15,7 +15,7 @@ export class AuthController {
     private readonly configService: ConfigService,
   ) {}
 
-  @HttpCode(201)
+  @HttpCode(200)
   @Public()
   @Post("/register")
   async register(@Body() loginReq: RegisterUserDto, @Res() res: Response) {
