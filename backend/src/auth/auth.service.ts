@@ -1,27 +1,28 @@
 import * as bcrypt from "bcrypt";
-import { Logger } from "winston";
 import {
   ForbiddenException,
-  Inject,
   Injectable,
   UnauthorizedException,
 } from "@nestjs/common";
-import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { JwtService } from "@nestjs/jwt";
 
 import { PrismaService } from "src/common/prisma/prisma.service";
 import { ValidationService } from "src/common/validation/validation.service";
 import { LoginUserDto, RegisterUserDto } from "./dto";
 import { UsersValidation } from "./zod";
+import { LoggingService } from "src/common/logging/logging.service";
+import { Response } from "express";
 
 @Injectable()
 export class AuthService {
   constructor(
-    @Inject(WINSTON_MODULE_PROVIDER) private logger: Logger,
+    private readonly loggingService: LoggingService,
     private readonly prismaService: PrismaService,
     private readonly jwtService: JwtService,
     private readonly validationService: ValidationService,
-  ) {}
+  ) {
+    loggingService.initiate("AuthService");
+  }
 
   async register(data: RegisterUserDto) {
     const registerUser = this.validationService.validate(
@@ -42,16 +43,15 @@ export class AuthService {
       10,
     );
 
-    this.logger.info(`Register User: ${registerUser.username}`);
+    this.loggingService.log(`Register User: ${registerUser.username}`);
 
     const user = await this.prismaService.user.create({
       data: {
         username: registerUser.username as string,
         password: registerUser.password,
       },
-      select: {
-        id: true,
-        username: true,
+      omit: {
+        password: true,
       },
     });
 
@@ -60,6 +60,9 @@ export class AuthService {
         id: user.id,
         username: user.username,
       }),
+      id: user.id,
+      username: user.username,
+      image: user.image,
     };
   }
 
@@ -84,13 +87,24 @@ export class AuthService {
 
     if (!isMatch) throw new UnauthorizedException("Username or password wrong");
 
-    this.logger.info(`Login User: ${user.username}`);
+    this.loggingService.log(`Login User: ${user.username}`);
 
     return {
       token: this.jwtService.sign({
         id: user.id,
         username: user.username,
       }),
+      id: user.id,
+      username: user.username,
+      image: user.image,
+    };
+  }
+
+  async logout(res: Response) {
+    res.clearCookie("token");
+
+    return {
+      message: "Logout Success",
     };
   }
 }

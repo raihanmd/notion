@@ -3,15 +3,19 @@ import { Prisma } from "@prisma/client";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 import { Response } from "express";
+import { LoggingService } from "../logging/logging.service";
 
 @Catch(ZodError, Prisma.PrismaClientKnownRequestError)
 export class ErrorFilter implements ExceptionFilter {
+  constructor(private readonly loggingService: LoggingService) {
+    this.loggingService.initiate("ErrorFilter");
+  }
   catch(exception: any, host: ArgumentsHost) {
     const response = host.switchToHttp().getResponse();
 
     switch (true) {
       case exception instanceof ZodError:
-        console.log(exception);
+        this.loggingService.error(exception);
 
         response.status(400).json({
           message: fromZodError(exception).toString(),

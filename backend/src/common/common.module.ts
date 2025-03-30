@@ -1,15 +1,17 @@
+import * as chalk from "chalk";
 import * as winston from "winston";
 import { Global, Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
 import { APP_FILTER, APP_GUARD } from "@nestjs/core";
-import { WinstonModule } from "nest-winston";
 
 import { PrismaService } from "./prisma/prisma.service";
 import { ValidationService } from "./validation/validation.service";
 import { ResponseService } from "./response/response.service";
 import { ErrorFilter } from "./error/error.filter";
 import { JwtGuard } from "./guards/jwt.guard";
+import { LoggingService } from "./logging/logging.service";
+import { WinstonModule } from "nest-winston";
 
 @Global()
 @Module({
@@ -25,21 +27,22 @@ import { JwtGuard } from "./guards/jwt.guard";
     }),
     WinstonModule.forRoot({
       format: winston.format.combine(
-        winston.format.combine(
-          winston.format.ms(),
-          winston.format.timestamp({
-            format: "DD/MM/YYYY dddd HH:mm:ss",
-          }),
-          winston.format.printf(
-            (info) =>
-              `${info.timestamp} - [${info.level}] : ${info.message} ${info.ms || ""}`,
-          ),
-        ),
+        winston.format.ms(),
+        winston.format.timestamp({ format: "DD/MM/YYYY dddd HH:mm:ss" }),
+        winston.format.printf((info) => {
+          const level = winston.format
+            .colorize()
+            .colorize(info.level, `${info.level.toUpperCase()}`);
+          const context = chalk.yellow(`[${info.context || "Application"}]`);
+          const message = chalk.cyan(info.message);
+          const ms = chalk.magenta(info.ms);
+          return `${info.timestamp} ${level} ${context} : ${message} ${ms || ""}`;
+        }),
       ),
       level: "debug",
       transports: [
         new winston.transports.Console({
-          format: winston.format.colorize({ all: true }),
+          handleExceptions: true,
         }),
       ],
     }),
@@ -48,6 +51,7 @@ import { JwtGuard } from "./guards/jwt.guard";
     ValidationService,
     ResponseService,
     PrismaService,
+    LoggingService,
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
@@ -61,6 +65,6 @@ import { JwtGuard } from "./guards/jwt.guard";
       useClass: ErrorFilter,
     },
   ],
-  exports: [ValidationService, ResponseService, PrismaService],
+  exports: [ValidationService, ResponseService, PrismaService, LoggingService],
 })
 export class CommonModule {}
