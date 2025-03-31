@@ -41,11 +41,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const { username, password } = await authSchema.parseAsync(credentials);
 
         if (action === "register") {
-          const {
-            data: response,
-            status,
-            statusText,
-          } = await axiosInstance({
+          const { data: response, status } = await axiosInstance({
             url: "/v1/auth/register",
             method: "POST",
             data: {
@@ -68,7 +64,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           //   },
           // );
 
-          if (!response.ok) {
+          if (status !== 200) {
             if (status === 409) {
               throw new UserExistsError("UserExists");
             }
@@ -86,11 +82,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           };
         }
 
-        const {
-          data: response,
-          status,
-          statusText,
-        } = await axiosInstance({
+        const { data: response, status } = await axiosInstance({
           url: "/v1/auth/login",
           method: "POST",
           data: {
@@ -113,7 +105,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         //   },
         // );
 
-        if (!response.ok) {
+        if (status !== 200) {
           throw new LoginFailedError("LoginFailed");
         }
 

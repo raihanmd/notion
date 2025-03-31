@@ -17,7 +17,7 @@ export default function RegisterPage() {
       username: "",
       password: "",
     },
-    mode: "onChange",
+    mode: "onTouched",
   });
 
   async function onSubmit(data: AuthFormValues) {

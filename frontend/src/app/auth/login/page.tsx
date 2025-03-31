@@ -26,7 +26,7 @@ export default function LoginPage() {
       username: "",
       password: "",
     },
-    mode: "onChange",
+    mode: "onTouched",
   });
 
   async function onSubmit(data: AuthFormValues) {

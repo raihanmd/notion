@@ -8,7 +8,7 @@ export default function layout({ children }: Props) {
   return (
     <SidebarProvider>
       <AppSidebar />
-      <main className="p-2">
+      <main className="size-full min-h-[100dvh] p-2">
         <SidebarTrigger />
         {children}
       </main>
