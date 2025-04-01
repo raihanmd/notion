@@ -2,7 +2,7 @@ import NextAuth, { CredentialsSignin } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { env } from "~/env";
 import { cookies } from "next/headers";
-import { authSchema } from "~/validation/auth/auth-validation";
+import { authSchema } from "~/validation/auth";
 import { axiosInstance } from "~/lib/axios-instance";
 
 class UserExistsError extends CredentialsSignin {

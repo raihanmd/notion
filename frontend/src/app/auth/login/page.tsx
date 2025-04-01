@@ -5,7 +5,7 @@ import { AuthForm, type AuthFormValues } from "~/_components/auth/auth-form";
 import { toast } from "sonner";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { authSchema } from "~/validation/auth/auth-validation";
+import { authSchema } from "~/validation/auth";
 import { Alert, AlertDescription, AlertTitle } from "~/_components/ui/alert";
 import { CircleX } from "lucide-react";
 

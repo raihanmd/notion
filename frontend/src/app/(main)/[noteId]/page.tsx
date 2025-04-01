@@ -1,5 +1,8 @@
-type Props = {};
+type Props = {
+  params: Promise<{ noteId: string }>;
+};
 
-export default function page({}: Props) {
-  return <div className="px-1 py-4">Hello</div>;
+export default async function page({ params }: Props) {
+  const { noteId } = await params;
+  return <div className="px-1 py-4">{noteId}</div>;
 }

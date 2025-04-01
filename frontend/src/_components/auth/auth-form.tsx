@@ -8,7 +8,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useFormContext } from "react-hook-form";
 import type { z } from "zod";
-import type { authSchema } from "~/validation/auth/auth-validation";
+import type { authSchema } from "~/validation/auth";
 
 export type AuthFormValues = z.infer<typeof authSchema>;
 

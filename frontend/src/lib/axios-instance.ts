@@ -1,4 +1,5 @@
 import axios, { AxiosError, type AxiosRequestConfig } from "axios";
+import { logout } from "~/action/logout";
 import { env } from "~/env";
 
 export const createAxiosInstance = ({ baseURL }: { baseURL?: string }) => {
@@ -13,7 +14,9 @@ export const createAxiosInstance = ({ baseURL }: { baseURL?: string }) => {
   axiosInstance.interceptors.response.use(
     (response) => response,
     async (error: AxiosError) => {
-      return Promise.reject(error);
+      if (error.response?.status === 401) {
+        logout();
+      }
     },
   );
 

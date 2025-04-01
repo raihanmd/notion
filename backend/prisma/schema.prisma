@@ -19,5 +19,28 @@ model User {
   password String  @db.VarChar(255)
   image    String? @db.VarChar(255)
 
+  Note Note[]
+
   @@map("users")
+}
+
+model Note {
+  id           String    @id @default(uuid())
+  user_id      String
+  parent_id    String?   @db.VarChar(255)
+  title        String    @db.VarChar(255)
+  content      String    @db.Text
+  image        String?   @db.VarChar(255)
+  icon         String?   @db.VarChar(255)
+  is_published Boolean   @default(false)
+  is_archived  Boolean   @default(false)
+  created_at   DateTime  @default(now()) @db.Timestamp(6)
+  updated_at   DateTime  @updatedAt @db.Timestamp(6)
+  deleted_at   DateTime? @db.Timestamp(6)
+
+  User       User   @relation(fields: [user_id], references: [id])
+  ParentNote Note?  @relation("ParentNote", fields: [parent_id], references: [id])
+  ChildNote  Note[] @relation("ParentNote")
+
+  @@map("notes")
 }

@@ -4,6 +4,7 @@ import { type Metadata } from "next";
 import { Geist } from "next/font/google";
 import { ThemeProvider } from "~/_components/theme-provider";
 import { Toaster } from "~/_components/ui/sonner";
+import { ReactQueryProvider } from "~/provider/react-query-provider";
 
 export const metadata: Metadata = {
   title: "Notion Clone",
@@ -23,15 +24,19 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${geist.variable}`} suppressHydrationWarning>
       <body>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="dark"
-          enableSystem
-          disableTransitionOnChange
-        >
-          {children}
-          <Toaster />
-        </ThemeProvider>
+        <ReactQueryProvider>
+          {/* <JotaiProvider> */}
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="dark"
+            enableSystem
+            disableTransitionOnChange
+          >
+            {children}
+            <Toaster />
+          </ThemeProvider>
+          {/* </JotaiProvider> */}
+        </ReactQueryProvider>
       </body>
     </html>
   );

@@ -11,9 +11,16 @@
         "@radix-ui/react-slot": "^1.1.2",
         "@radix-ui/react-tooltip": "^1.1.8",
         "@t3-oss/env-nextjs": "^0.12.0",
+        "@tanstack/query-core": "^5.71.1",
+        "@tanstack/query-sync-storage-persister": "^5.71.1",
+        "@tanstack/react-query": "^5.71.1",
+        "@tanstack/react-query-devtools": "^5.71.1",
+        "@tanstack/react-query-persist-client": "^5.71.1",
         "axios": "^1.8.4",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
+        "jotai": "^2.12.2",
+        "jotai-tanstack-query": "^0.9.0",
         "lucide-react": "^0.484.0",
         "next": "^15.2.3",
         "next-auth": "^5.0.0-beta.25",
@@ -251,6 +258,20 @@
     "@tailwindcss/oxide-win32-x64-msvc": ["@tailwindcss/oxide-win32-x64-msvc@4.0.17", "", { "os": "win32", "cpu": "x64" }, "sha512-7/DTEvXcoWlqX0dAlcN0zlmcEu9xSermuo7VNGX9tJ3nYMdo735SHvbrHDln1+LYfF6NhJ3hjbpbjkMOAGmkDg=="],
 
     "@tailwindcss/postcss": ["@tailwindcss/postcss@4.0.17", "", { "dependencies": { "@alloc/quick-lru": "^5.2.0", "@tailwindcss/node": "4.0.17", "@tailwindcss/oxide": "4.0.17", "lightningcss": "1.29.2", "postcss": "^8.4.41", "tailwindcss": "4.0.17" } }, "sha512-qeJbRTB5FMZXmuJF+eePd235EGY6IyJZF0Bh0YM6uMcCI4L9Z7dy+lPuLAhxOJzxnajsbjPoDAKOuAqZRtf1PQ=="],
+
+    "@tanstack/query-core": ["@tanstack/query-core@5.71.1", "", {}, "sha512-4+ZswCHOfJX+ikhXNoocamTUmJcHtB+Ljjz/oJkC7/eKB5IrzEwR4vEwZUENiPi+wISucJHR5TUbuuJ26w3kdQ=="],
+
+    "@tanstack/query-devtools": ["@tanstack/query-devtools@5.67.2", "", {}, "sha512-O4QXFFd7xqp6EX7sdvc9tsVO8nm4lpWBqwpgjpVLW5g7IeOY6VnS/xvs/YzbRhBVkKTMaJMOUGU7NhSX+YGoNg=="],
+
+    "@tanstack/query-persist-client-core": ["@tanstack/query-persist-client-core@5.71.1", "", { "dependencies": { "@tanstack/query-core": "5.71.1" } }, "sha512-bebzWbyQm3Fc1oUvWxSHJi9TxuD5EORqm04uxKWgpXfzYOZ9N2nRq2dw/VV4pxOZV+//do6nN44yaoMr+2Yefw=="],
+
+    "@tanstack/query-sync-storage-persister": ["@tanstack/query-sync-storage-persister@5.71.1", "", { "dependencies": { "@tanstack/query-core": "5.71.1", "@tanstack/query-persist-client-core": "5.71.1" } }, "sha512-QZ2SGVKGqYPZNCxChh93flceRX5N3Ejhal37XzHadVlg7Q9dC2yRdRXHwC8tFMvPNyMEIWPeT/Xt9lxUdQf/WQ=="],
+
+    "@tanstack/react-query": ["@tanstack/react-query@5.71.1", "", { "dependencies": { "@tanstack/query-core": "5.71.1" }, "peerDependencies": { "react": "^18 || ^19" } }, "sha512-6BTkaSIGT58MroI4kIGXNdx/NhirXPU+75AJObLq+WBa39WmoxhzSk0YX+hqWJ/bvqZJFxslbEU4qIHaRZq+8Q=="],
+
+    "@tanstack/react-query-devtools": ["@tanstack/react-query-devtools@5.71.1", "", { "dependencies": { "@tanstack/query-devtools": "5.67.2" }, "peerDependencies": { "@tanstack/react-query": "^5.71.1", "react": "^18 || ^19" } }, "sha512-nETCStlMy1h3Hcy1rnHJVbW8ERsAErAzpCsBHIVd9AOjQgQjzjFl2FetlEZjRc+vMJjpJde9NDsftYhy7UA83A=="],
+
+    "@tanstack/react-query-persist-client": ["@tanstack/react-query-persist-client@5.71.1", "", { "dependencies": { "@tanstack/query-persist-client-core": "5.71.1" }, "peerDependencies": { "@tanstack/react-query": "^5.71.1", "react": "^18 || ^19" } }, "sha512-iJbDF3EGklSzZtzeP0pUlrVC65ks6/TljXKBpGMDm8A8rfilLmlguQfMB9KChTCqYAYJw+w9y4gvnVULm3KtWA=="],
 
     "@tybys/wasm-util": ["@tybys/wasm-util@0.9.0", "", { "dependencies": { "tslib": "^2.4.0" } }, "sha512-6+7nlbMVX/PVDCwaIQ8nTOPveOcFLSt8GcXdx8hD0bt39uWxYT88uXzqTd4fTvqta7oeUJqudepapKNt2DYJFw=="],
 
@@ -621,6 +642,10 @@
     "jiti": ["jiti@2.4.2", "", { "bin": { "jiti": "lib/jiti-cli.mjs" } }, "sha512-rg9zJN+G4n2nfJl5MW3BMygZX56zKPNVEYYqq7adpmMh4Jn2QNEwhvQlFy6jPVdcod7txZtKHWnyZiA3a0zP7A=="],
 
     "jose": ["jose@5.10.0", "", {}, "sha512-s+3Al/p9g32Iq+oqXxkW//7jk2Vig6FF1CFqzVXoTUXt2qz89YWbL+OwS17NFYEvxC35n0FKeGO2LGYSxeM2Gg=="],
+
+    "jotai": ["jotai@2.12.2", "", { "peerDependencies": { "@types/react": ">=17.0.0", "react": ">=17.0.0" }, "optionalPeers": ["@types/react", "react"] }, "sha512-oN8715y7MkjXlSrpyjlR887TOuc/NLZMs9gvgtfWH/JP47ChwO0lR2ijSwBvPMYyXRAPT+liIAhuBavluKGgtA=="],
+
+    "jotai-tanstack-query": ["jotai-tanstack-query@0.9.0", "", { "peerDependencies": { "@tanstack/query-core": "*", "jotai": ">=2.0.0" } }, "sha512-8n7/xV14+ZE63dyqngtmqs6aV1bNnQJF9bJN5Bj70USc2cMFRmsVhGGzL1cSvp5E/xXasU37czFFaZ0vavmyfA=="],
 
     "js-tokens": ["js-tokens@4.0.0", "", {}, "sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ=="],
 

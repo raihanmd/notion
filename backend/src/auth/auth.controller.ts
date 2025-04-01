@@ -47,17 +47,4 @@ export class AuthController {
     const data = await this.authService.logout(res);
     return res.json(this.responseService.success(data));
   }
-
-  // @HttpCode(200)
-  // @Get("/me")
-  // async secret(@Req() req: any) {
-  //   return { req: JSON.stringify(req?.user) };
-  // }
-
-  // @HttpCode(200)
-  // @Get("/public")
-  // @Public()
-  // async public() {
-  //   return { hello: `world public` };
-  // }
 }

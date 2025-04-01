@@ -1,4 +1,4 @@
-import { Calendar, Home, Inbox, Search, Settings } from "lucide-react";
+"use client";
 
 import {
   Sidebar,
@@ -11,56 +11,42 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "./ui/sidebar";
-
-const items = [
-  {
-    title: "Home",
-    url: "#",
-    icon: Home,
-  },
-  {
-    title: "Inbox",
-    url: "#",
-    icon: Inbox,
-  },
-  {
-    title: "Calendar",
-    url: "#",
-    icon: Calendar,
-  },
-  {
-    title: "Search",
-    url: "#",
-    icon: Search,
-  },
-  {
-    title: "Settings",
-    url: "#",
-    icon: Settings,
-  },
-];
+import { Skeleton } from "./ui/skeleton";
+import Link from "next/link";
+import { useNotesList } from "~/atoms/notes";
 
 export function AppSidebar() {
+  const [{ data, isLoading }] = useNotesList();
+
   return (
     <Sidebar variant="sidebar">
       <SidebarHeader>
-        <span className="text-center font-bold">Votion.dev</span>
+        <Link href={"/"} className="py-5 text-center font-bold">
+          Notion
+        </Link>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Application</SidebarGroupLabel>
+          <SidebarGroupLabel>Your notes</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {items.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <a href={item.url}>
-                      <item.icon />
-                      <span>{item.title}</span>
-                    </a>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {isLoading
+                ? Array.from({ length: 5 }).map((_, index) => (
+                    <Skeleton
+                      key={index}
+                      className="bg-muted h-8 w-full rounded-md"
+                    />
+                  ))
+                : data?.payload?.map((item) => (
+                    <SidebarMenuItem key={item.id}>
+                      <SidebarMenuButton asChild>
+                        <Link prefetch href={item.id}>
+                          {item.icon && <span>{item.icon}</span>}
+                          <span>{item.title}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
