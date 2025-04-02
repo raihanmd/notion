@@ -124,3 +124,40 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  /* Define the waving keyframes animation */
+  @keyframes waving {
+    0% {
+      transform: rotate(0deg);
+    }
+    10% {
+      transform: rotate(14deg);
+    }
+    20% {
+      transform: rotate(-8deg);
+    }
+    30% {
+      transform: rotate(14deg);
+    }
+    40% {
+      transform: rotate(-4deg);
+    }
+    50% {
+      transform: rotate(10deg);
+    }
+    60% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(0deg);
+    }
+  }
+
+  /* Create the animation class */
+  .animate-waving {
+    animation: waving 2s infinite;
+    transform-origin: 70% 70%; /* Adjust the rotation point to make it more natural */
+    display: inline-block;
+  }
+}

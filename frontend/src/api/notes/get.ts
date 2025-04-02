@@ -11,6 +11,7 @@ export type TNotesItem = {
   is_published?: boolean;
   is_archived?: boolean;
   created_at: string;
+  updated_at: string;
 };
 
 export type GetNotesListResponse = {

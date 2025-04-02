@@ -1,24 +1,23 @@
 import { type AxiosRequestConfig, type AxiosResponse } from "axios";
 import { axiosInstance } from "~/lib/axios-instance";
 import type { TNotesItem } from "./get";
-import type { TCreateNotes } from "~/validation/notes";
+import type { TGetNotesParams } from "~/validation/notes";
 
-export type CreateNotesResponse = {
+export type DeleteNotesResponse = {
   payload: TNotesItem;
 };
 
-export const createNotes = async <ResponseType = CreateNotesResponse>({
+export const deleteNotes = async <ResponseType = DeleteNotesResponse>({
   options,
-  body,
+  params,
 }: {
   options?: AxiosRequestConfig;
-  body: TCreateNotes;
+  params: TGetNotesParams;
 }) => {
   const response: AxiosResponse<ResponseType> = await axiosInstance({
     ...options,
-    data: body,
-    method: "post",
-    url: "/v1/notes",
+    method: "delete",
+    url: `/v1/notes/${params.id}`,
   });
   return response?.data;
 };
