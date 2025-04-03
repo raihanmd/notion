@@ -103,8 +103,6 @@ export class AuthService {
   async logout(res: Response) {
     res.clearCookie("token");
 
-    return {
-      message: "Logout Success",
-    };
+    return "Logout Success";
   }
 }

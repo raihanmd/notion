@@ -25,7 +25,12 @@ export class AuthController {
       secure: this.configService.get("NODE_ENV") === "production",
       sameSite: "strict",
     });
-    return res.json(this.responseService.success(data));
+    return res.json(
+      this.responseService.success({
+        payload: data,
+        message: "Register Success",
+      }),
+    );
   }
 
   @HttpCode(200)
@@ -38,13 +43,18 @@ export class AuthController {
       secure: this.configService.get("NODE_ENV") === "production",
       sameSite: "strict",
     });
-    return res.json(this.responseService.success(data));
+    return res.json(
+      this.responseService.success({
+        payload: data,
+        message: "Login Success",
+      }),
+    );
   }
 
   @HttpCode(200)
   @Post("/logout")
   async logout(@Res() res: Response) {
     const data = await this.authService.logout(res);
-    return res.json(this.responseService.success(data));
+    return res.json(this.responseService.successMessage("Logout Success"));
   }
 }

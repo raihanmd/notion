@@ -26,7 +26,10 @@ export class NotesController {
   async create(@Body() createNoteDto: CreateNoteDto, @Req() req: any) {
     const res = await this.notesService.create(createNoteDto, req.user.id);
 
-    return this.responseService.success(res);
+    return this.responseService.success({
+      payload: res,
+      message: "Note created successfully",
+    });
   }
 
   @HttpCode(200)
@@ -34,7 +37,10 @@ export class NotesController {
   async findAll(@Req() req: any) {
     const res = await this.notesService.findAll(req.user.id);
 
-    return this.responseService.success(res);
+    return this.responseService.success({
+      payload: res,
+      message: "Notes fetched successfully",
+    });
   }
 
   @HttpCode(200)
@@ -42,7 +48,10 @@ export class NotesController {
   findOne(@Param("id") id: string, @Req() req: any) {
     const res = this.notesService.findOne(id, req.user.id);
 
-    return this.responseService.success(res);
+    return this.responseService.success({
+      payload: res,
+      message: "Note fetched successfully",
+    });
   }
 
   @HttpCode(200)
@@ -54,13 +63,16 @@ export class NotesController {
   ) {
     const res = await this.notesService.update(id, req.user.id, updateNoteDto);
 
-    return this.responseService.success(res);
+    return this.responseService.success({
+      payload: res,
+      message: "Note updated successfully",
+    });
   }
 
   @Delete(":id")
   async remove(@Param("id") id: string, @Req() req: any) {
     const res = await this.notesService.remove(id, req.user.id);
 
-    return this.responseService.success(res);
+    return this.responseService.successMessage("Note deleted successfully");
   }
 }

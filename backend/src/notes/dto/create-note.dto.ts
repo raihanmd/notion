@@ -7,6 +7,7 @@ export class CreateNoteDto implements z.infer<typeof createNoteSchema> {
   image?: string;
   icon?: string;
   is_published?: boolean;
+  is_archived?: boolean;
 }
 
 export const createNoteSchema = z.object({
@@ -16,4 +17,5 @@ export const createNoteSchema = z.object({
   image: z.string().optional(),
   icon: z.string().optional(),
   is_published: z.boolean().optional(),
+  is_archived: z.boolean().optional(),
 });
