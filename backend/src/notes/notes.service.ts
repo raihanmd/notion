@@ -3,6 +3,8 @@ import { CreateNoteDto, createNoteSchema } from "./dto/create-note.dto";
 import { UpdateNoteDto } from "./dto/update-note.dto";
 import { ValidationService } from "src/common/validation/validation.service";
 import { PrismaService } from "src/common/prisma/prisma.service";
+import { QueryParamsNoteDto } from "./dto/search-note-dto";
+import { Prisma } from "@prisma/client";
 
 @Injectable()
 export class NotesService {
@@ -23,9 +25,22 @@ export class NotesService {
     });
   }
 
-  async findAll(userId: string) {
+  async findAll(userId: string, data: QueryParamsNoteDto) {
+    const filter: Prisma.NoteWhereInput = {};
+
+    if (data.search)
+      filter.title = {
+        contains: decodeURIComponent(data.search),
+        mode: "insensitive",
+      };
+
     return await this.prismaService.note.findMany({
-      where: { user_id: userId, deleted_at: null, is_archived: false },
+      where: {
+        ...filter,
+        user_id: userId,
+        deleted_at: null,
+        is_archived: false,
+      },
       orderBy: { created_at: "desc" },
     });
   }

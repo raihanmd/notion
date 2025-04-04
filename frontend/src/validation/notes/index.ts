@@ -17,8 +17,16 @@ const createNotesValidationSchema = z.object({
   is_published: z.boolean().optional(),
 });
 
+const queryParamsNotesValidationSchema = z.object({
+  search: z.string().optional(),
+});
+
 export type TCreateNotes = z.infer<typeof createNotesValidationSchema>;
 
 export type TUpdateNotes = Partial<z.infer<typeof createNotesValidationSchema>>;
 
 export type TGetNotesParams = z.infer<typeof getNotesValidationSchema>;
+
+export type TQueryParamsNotes = z.infer<
+  typeof queryParamsNotesValidationSchema
+>;

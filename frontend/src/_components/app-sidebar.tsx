@@ -17,7 +17,7 @@ import Link from "next/link";
 import {
   useCreateNote,
   useDeleteNote,
-  useNotesList,
+  useNotesListSidebar,
   useUpdateNote,
 } from "~/atoms/notes";
 import { usePathname, useRouter } from "next/navigation";
@@ -51,7 +51,7 @@ export function AppSidebar() {
     useUpdateNote();
   const { mutateAsync: deleteNoteAsync, isPending: isDeletePending } =
     useDeleteNote();
-  const [{ data, isLoading }] = useNotesList();
+  const { data, isLoading } = useNotesListSidebar();
   const { mutateAsync, isPending } = useCreateNote();
 
   const [editingId, setEditingId] = useState<string | null>(null);

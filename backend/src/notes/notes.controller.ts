@@ -8,6 +8,7 @@ import {
   Delete,
   Req,
   HttpCode,
+  Query,
 } from "@nestjs/common";
 import { NotesService } from "./notes.service";
 import { CreateNoteDto } from "./dto/create-note.dto";
@@ -34,8 +35,8 @@ export class NotesController {
 
   @HttpCode(200)
   @Get()
-  async findAll(@Req() req: any) {
-    const res = await this.notesService.findAll(req.user.id);
+  async findAll(@Req() req: any, @Query("search") search: string) {
+    const res = await this.notesService.findAll(req.user.id, { search });
 
     return this.responseService.success({
       payload: res,

@@ -1,24 +1,55 @@
 "use client";
-import { CirclePlus, Notebook, Star, FileText, Plus } from "lucide-react";
+import {
+  CirclePlus,
+  Notebook,
+  Star,
+  FileText,
+  Plus,
+  Loader,
+  Search,
+} from "lucide-react";
+import { useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "~/_components/ui/button";
 import { useCreateNote, useNotesList } from "~/atoms/notes";
-import { useState } from "react";
 import { WavingEmoji } from "~/_components/ui/waing-emoji";
 import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+import { Input } from "~/_components/ui/input";
+import debounce from "lodash/debounce";
+import { useChangeUrlParams } from "~/hooks/common/use-change-url-params";
+import type { TQueryParamsNotes } from "~/validation/notes";
 
 export default function Page() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { data: session } = useSession();
-  const [{ data, isFetching }] = useNotesList();
   const { mutateAsync, isPending } = useCreateNote();
-  const [searchQuery, setSearchQuery] = useState("");
+  const { changeUrlParams } = useChangeUrlParams();
 
   const handleCreateNote = async () => {
     const res = await mutateAsync({ title: "Untitled", content: "" });
     router.push(`/${res.payload.id}`);
   };
+
+  const params: TQueryParamsNotes = {
+    search: searchParams.get("search") || "",
+  };
+
+  const { data, isFetching, refetch, isFetched } = useNotesList({ params });
+
+  const handleSearch = debounce((search) => {
+    changeUrlParams({
+      newParams: { search },
+      withPrevSearchParams: true,
+    });
+  }, 750);
+
+  useEffect(() => {
+    if (!isFetched) return;
+    refetch();
+  }, [isFetched, searchParams, refetch]);
 
   // const quickAccess = [
   //   {
@@ -37,20 +68,19 @@ export default function Page() {
 
   return (
     <div className="bg-background min-h-[calc(100dvh-3rem)] overflow-auto p-6">
-      {/* Header with greeting and search */}
       <div className="mb-8 flex items-center justify-between">
         <h1 className="text-foreground text-3xl font-semibold">
           <WavingEmoji /> Hello, {session?.user?.name || "there"}
         </h1>
-        {/* <div className="relative w-64">
+        <div className="relative w-64">
           <Search className="text-muted-foreground absolute top-2.5 left-2 h-4 w-4" />
           <Input
             placeholder="Search..."
             className="bg-muted/50 border-none pl-8"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            defaultValue={params.search}
+            onChange={(e) => handleSearch(e.target.value)}
           />
-        </div> */}
+        </div>
       </div>
 
       {/* Main content */}
@@ -117,10 +147,7 @@ export default function Page() {
             </div>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
               {data.payload.map((note) => {
-                const lastUpdatedHour = dayjs().diff(
-                  dayjs(note.updated_at),
-                  "h",
-                );
+                dayjs.extend(relativeTime);
                 return (
                   <div
                     key={note.id}
@@ -135,12 +162,7 @@ export default function Page() {
                         {note.title}
                       </h3>
                       <p className="text-muted-foreground mt-1 text-xs">
-                        Last edited{" "}
-                        {lastUpdatedHour > 0
-                          ? lastUpdatedHour > 24
-                            ? "yesterday"
-                            : `${lastUpdatedHour}h ago`
-                          : "recently"}
+                        Last edited {dayjs(note.updated_at).fromNow()}
                       </p>
                     </div>
                     <Button
@@ -155,6 +177,10 @@ export default function Page() {
               })}
             </div>
           </section>
+        </div>
+      ) : isFetching ? (
+        <div className="flex min-h-[calc(100dvh-10.5rem)] items-center justify-center text-center">
+          <Loader className="size-6 animate-spin" />
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center gap-5 py-20">
@@ -179,7 +205,6 @@ export default function Page() {
         </div>
       )}
 
-      {/* Floating action button for mobile */}
       <Button
         onClick={handleCreateNote}
         disabled={isPending}

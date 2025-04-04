@@ -1,8 +1,14 @@
-type Props = {
-  params: Promise<{ noteId: string }>;
-};
+"use client";
 
-export default async function page({ params }: Props) {
-  const { noteId } = await params;
-  return <div className="px-1 py-4">{noteId}</div>;
+import { useNoteDetail } from "~/atoms/notes";
+
+// type Props = {
+//   params: Promise<{ noteId: string }>;
+// };
+
+export default function page() {
+  // const { noteId } = await params;
+  const { data, isFetching } = useNoteDetail();
+
+  return <div className="px-1 py-4">{JSON.stringify(data, null, 2)}</div>;
 }
