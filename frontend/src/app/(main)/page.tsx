@@ -12,7 +12,7 @@ import { useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "~/_components/ui/button";
-import { useCreateNote, useNotesList } from "~/atoms/notes";
+import { useNoteCreate, useNotesList } from "~/atoms/notes";
 import { WavingEmoji } from "~/_components/ui/waing-emoji";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
@@ -25,7 +25,7 @@ export default function Page() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { data: session } = useSession();
-  const { mutateAsync, isPending } = useCreateNote();
+  const { mutateAsync, isPending } = useNoteCreate();
   const { changeUrlParams } = useChangeUrlParams();
 
   const handleCreateNote = async () => {
@@ -39,12 +39,12 @@ export default function Page() {
 
   const { data, isFetching, refetch, isFetched } = useNotesList({ params });
 
-  const handleSearch = debounce((search) => {
+  const handleSearch = debounce((search: string) => {
     changeUrlParams({
       newParams: { search },
       withPrevSearchParams: true,
     });
-  }, 750);
+  }, 300);
 
   useEffect(() => {
     if (!isFetched) return;
@@ -77,6 +77,7 @@ export default function Page() {
           <Input
             placeholder="Search..."
             className="bg-muted/50 border-none pl-8"
+            isLoading={isFetching}
             defaultValue={params.search}
             onChange={(e) => handleSearch(e.target.value)}
           />
@@ -183,16 +184,16 @@ export default function Page() {
           <Loader className="size-6 animate-spin" />
         </div>
       ) : (
-        <div className="flex flex-col items-center justify-center gap-5 py-20">
-          <div className="relative">
+        <div className="flex flex-col items-center justify-center gap-2 py-20">
+          <div className="relative mb-4">
             <Notebook className="text-muted-foreground h-32 w-32 -rotate-12" />
           </div>
           <h3 className="text-muted-foreground text-xl font-medium">
-            You don&apos;t have any notes yet
+            Notes not found
           </h3>
-          <p className="text-muted-foreground mb-4 max-w-md text-center">
-            Create your first note to get started with organizing your thoughts
-            and ideas.
+          <p className="text-muted-foreground max-w-md text-center">
+            Create your note to get started with organizing your thoughts and
+            ideas.
           </p>
           <Button
             disabled={isPending}

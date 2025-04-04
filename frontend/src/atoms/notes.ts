@@ -63,7 +63,7 @@ type useNoteDetailConfig = {
 
 export const useNoteDetail = (config?: useNoteDetailConfig) => {
   const {
-    queryKey = [QUERY_KEY_NOTES.NOTES_LIST],
+    queryKey = [QUERY_KEY_NOTES.NOTES_DETAIL],
     params,
     options,
   } = config ?? {};
@@ -76,7 +76,7 @@ export const useNoteDetail = (config?: useNoteDetailConfig) => {
   });
 };
 
-export const useCreateNote = () => {
+export const useNoteCreate = () => {
   const queryClient = useQueryClient();
 
   return useMutation<CreateNotesResponse, Error, TCreateNotes>({
@@ -88,7 +88,13 @@ export const useCreateNote = () => {
   });
 };
 
-export const useUpdateNote = () => {
+export const useNoteUpdate = () => {
+  const queryKey = [
+    [QUERY_KEY_NOTES.NOTES_LIST],
+    [QUERY_KEY_NOTES.NOTES_DETAIL],
+    [QUERY_KEY_NOTES.NOTES_SIDEBAR],
+  ];
+
   const queryClient = useQueryClient();
 
   return useMutation<
@@ -100,12 +106,14 @@ export const useUpdateNote = () => {
       apiServices.notes.updateNotes({ body: data.body, params: data.params }),
     onSuccess: () => {
       toast.success("Note updated.");
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEY_NOTES.NOTES_LIST] });
+      (queryKey as QueryKey[]).map((key: QueryKey) => {
+        queryClient.invalidateQueries({ queryKey: key });
+      });
     },
   });
 };
 
-export const useDeleteNote = () => {
+export const useNoteDelete = () => {
   const queryClient = useQueryClient();
 
   return useMutation<UpdateNotesResponse, Error, TGetNotesParams>({

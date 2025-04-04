@@ -46,8 +46,8 @@ export class NotesController {
 
   @HttpCode(200)
   @Get(":id")
-  findOne(@Param("id") id: string, @Req() req: any) {
-    const res = this.notesService.findOne(id, req.user.id);
+  async findOne(@Param("id") id: string, @Req() req: any) {
+    const res = await this.notesService.findOne(id, req.user.id);
 
     return this.responseService.success({
       payload: res,

@@ -1,5 +1,4 @@
 "use client";
-
 import { CirclePlus, Trash2, MoreHorizontal, Pencil } from "lucide-react";
 import {
   Sidebar,
@@ -15,10 +14,10 @@ import {
 import { Skeleton } from "./ui/skeleton";
 import Link from "next/link";
 import {
-  useCreateNote,
-  useDeleteNote,
+  useNoteCreate,
+  useNoteDelete,
   useNotesListSidebar,
-  useUpdateNote,
+  useNoteUpdate,
 } from "~/atoms/notes";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -30,7 +29,6 @@ import {
 } from "./ui/dropdown-menu";
 import { Button } from "./ui/button";
 import { useState, useRef, useEffect } from "react";
-import { Input } from "./ui/input";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -42,44 +40,50 @@ import {
   AlertDialogTitle,
 } from "./ui/alert-dialog";
 import { toast } from "sonner";
+import { cn } from "~/lib/utils";
 
 export function AppSidebar() {
   const router = useRouter();
   const pathname = usePathname();
 
   const { mutateAsync: updateNoteAsync, isPending: isUpdatePending } =
-    useUpdateNote();
+    useNoteUpdate();
   const { mutateAsync: deleteNoteAsync, isPending: isDeletePending } =
-    useDeleteNote();
+    useNoteDelete();
   const { data, isLoading } = useNotesListSidebar();
-  const { mutateAsync, isPending } = useCreateNote();
+  const { mutateAsync, isPending } = useNoteCreate();
 
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editingTitle, setEditingTitle] = useState("");
-  const inputRef = useRef<HTMLInputElement>(null);
-
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [noteToDelete, setNoteToDelete] = useState<string | null>(null);
+
+  // Map of refs for each editable title
+  const editableRefs = useRef<Map<string, HTMLSpanElement>>(new Map());
 
   const handleCreateNote = async () => {
     const res = await mutateAsync({ title: "Untitled", content: "" });
     router.push(`/${res.payload.id}`);
   };
 
-  const handleTitleDoubleClick = (id: string, title: string) => {
+  const handleTitleDoubleClick = (id: string) => {
     setEditingId(id);
-    setEditingTitle(title);
   };
 
   const handleTitleSave = async (id: string) => {
-    if (editingTitle.trim() === "") {
-      setEditingTitle("Untitled");
+    const editableElement = editableRefs.current.get(id);
+    if (!editableElement) return;
+
+    let newTitle = editableElement.textContent || "";
+
+    if (newTitle.trim() === "") {
+      newTitle = "Untitled";
+      editableElement.textContent = newTitle;
     }
 
     try {
       await updateNoteAsync({
         body: {
-          title: editingTitle,
+          title: newTitle,
         },
         params: {
           id,
@@ -99,6 +103,14 @@ export function AppSidebar() {
       handleTitleSave(id);
     } else if (e.key === "Escape") {
       setEditingId(null);
+      // Reset to original title
+      const item = data?.payload?.find((note) => note.id === id);
+      if (item && editableRefs.current.get(id)) {
+        const editableElement = editableRefs.current.get(id);
+        if (editableElement) {
+          editableElement.textContent = item.title;
+        }
+      }
     }
   };
 
@@ -120,12 +132,27 @@ export function AppSidebar() {
     }
   };
 
+  // Set up focus and selection when editing starts
   useEffect(() => {
-    if (editingId && inputRef.current) {
-      inputRef.current.focus();
-      inputRef.current.select();
+    if (editingId) {
+      const editableElement = editableRefs.current.get(editingId);
+      if (editableElement) {
+        editableElement.focus();
+        const selection = window.getSelection();
+        const range = document.createRange();
+        range.selectNodeContents(editableElement);
+        selection?.removeAllRanges();
+        selection?.addRange(range);
+      }
     }
   }, [editingId]);
+
+  // Store the ref for each editable element
+  const setEditableRef = (id: string, element: HTMLSpanElement | null) => {
+    if (element) {
+      editableRefs.current.set(id, element);
+    }
+  };
 
   return (
     <>
@@ -153,7 +180,7 @@ export function AppSidebar() {
             <SidebarGroupLabel>Your notes</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {isLoading
+                {!data || isLoading
                   ? Array.from({ length: 5 }).map((_, index) => (
                       <Skeleton
                         key={index}
@@ -168,37 +195,45 @@ export function AppSidebar() {
                           className="group/item"
                         >
                           <div className="flex w-full justify-between">
-                            {editingId === item.id ? (
-                              <Input
-                                ref={inputRef}
-                                value={editingTitle}
-                                onChange={(e) =>
-                                  setEditingTitle(e.target.value)
+                            <Link
+                              prefetch
+                              href={item.id}
+                              className="flex-1 truncate"
+                              onClick={(e) => {
+                                // Prevent navigation when editing
+                                if (editingId === item.id) {
+                                  e.preventDefault();
                                 }
-                                onBlur={() => handleTitleSave(item.id)}
-                                onKeyDown={(e) =>
-                                  handleTitleKeyDown(e, item.id)
-                                }
-                                className="h-6 px-1 py-0 text-sm"
-                                autoFocus
-                              />
-                            ) : (
-                              <Link
-                                prefetch
-                                href={item.id}
-                                className="flex-1 truncate"
-                                onDoubleClick={() =>
-                                  handleTitleDoubleClick(item.id, item.title)
-                                }
-                              >
-                                <div className="flex items-center">
-                                  {item.icon && (
-                                    <span className="mr-2">{item.icon}</span>
-                                  )}
-                                  <span className="truncate">{item.title}</span>
-                                </div>
-                              </Link>
-                            )}
+                              }}
+                            >
+                              <div className="flex items-center">
+                                {item.icon && (
+                                  <span className="mr-2">{item.icon}</span>
+                                )}
+                                <span
+                                  className={cn({
+                                    truncate: editingId !== item.id,
+                                    "border-b border-gray-300 px-1 outline-none":
+                                      editingId === item.id,
+                                  })}
+                                  ref={(el) => setEditableRef(item.id, el)}
+                                  contentEditable={editingId === item.id}
+                                  suppressContentEditableWarning={true}
+                                  onBlur={() => handleTitleSave(item.id)}
+                                  onKeyDown={(e) =>
+                                    handleTitleKeyDown(e, item.id)
+                                  }
+                                  onDoubleClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    handleTitleDoubleClick(item.id);
+                                  }}
+                                >
+                                  {item.title}
+                                </span>
+                              </div>
+                            </Link>
+
                             <DropdownMenu modal>
                               <DropdownMenuTrigger
                                 asChild
@@ -220,7 +255,7 @@ export function AppSidebar() {
                                     isPending
                                   }
                                   onClick={() =>
-                                    handleTitleDoubleClick(item.id, item.title)
+                                    handleTitleDoubleClick(item.id)
                                   }
                                 >
                                   <Pencil className="size-4" />

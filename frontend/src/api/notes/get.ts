@@ -6,7 +6,6 @@ export type TNotesItem = {
   id: string;
   parent_id?: string;
   title: string;
-  content: string;
   image?: string;
   icon?: string;
   is_published?: boolean;

@@ -19,7 +19,7 @@ model User {
   password String  @db.VarChar(255)
   image    String? @db.VarChar(255)
 
-  Note Note[]
+  notes Note[]
 
   @@map("users")
 }
@@ -29,7 +29,6 @@ model Note {
   user_id      String
   parent_id    String?   @db.VarChar(255)
   title        String    @db.VarChar(255)
-  content      String    @db.Text
   image        String?   @db.VarChar(255)
   icon         String?   @db.VarChar(255)
   is_published Boolean   @default(false)
@@ -38,9 +37,24 @@ model Note {
   updated_at   DateTime  @updatedAt @db.Timestamp(6)
   deleted_at   DateTime? @db.Timestamp(6)
 
-  User       User   @relation(fields: [user_id], references: [id])
-  ParentNote Note?  @relation("ParentNote", fields: [parent_id], references: [id])
-  ChildNote  Note[] @relation("ParentNote")
+  user        User    @relation(fields: [user_id], references: [id])
+  parent_note Note?   @relation("ParentNote", fields: [parent_id], references: [id])
+  child_note  Note[]  @relation("ParentNote")
+  blocks      Block[]
 
   @@map("notes")
+}
+
+model Block {
+  id         String   @id @default(uuid())
+  note_id    String
+  type       String   @db.VarChar(255)
+  content    String?  @db.Text
+  position   Int      @default(0)
+  created_at DateTime @default(now()) @db.Timestamp(6)
+  updated_at DateTime @updatedAt @db.Timestamp(6)
+
+  note Note @relation(fields: [note_id], references: [id])
+
+  @@map("blocks")
 }
