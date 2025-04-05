@@ -156,7 +156,11 @@ export default function Page() {
                     onClick={() => router.push(`/${note.id}`)}
                   >
                     <div className="mt-0.5 mr-3">
-                      <FileText className="text-muted-foreground h-5 w-5" />
+                      {note?.icon ? (
+                        <span className="text-2xl">{note.icon}</span>
+                      ) : (
+                        <FileText className="text-muted-foreground h-5 w-5" />
+                      )}
                     </div>
                     <div className="min-w-0 flex-1">
                       <h3 className="text-foreground truncate font-medium">

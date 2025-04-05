@@ -207,7 +207,7 @@ export function AppSidebar() {
                               }}
                             >
                               <div className="flex items-center">
-                                {item.icon && (
+                                {item?.icon && (
                                   <span className="mr-2">{item.icon}</span>
                                 )}
                                 <span
@@ -301,11 +301,10 @@ export function AppSidebar() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeleteNote}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Delete
+            <AlertDialogAction asChild>
+              <Button variant={"destructive"} onClick={handleDeleteNote}>
+                Delete
+              </Button>
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

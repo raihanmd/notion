@@ -17,6 +17,7 @@ import {
   type UseQueryOptions,
 } from "@tanstack/react-query";
 import type { GetDetailNoteResponse, GetNotesListResponse } from "~/api/notes";
+import { useRouter } from "next/navigation";
 
 type useNotesListSidebarConfig = {
   queryKey?: QueryKey;
@@ -67,23 +68,48 @@ export const useNoteDetail = (config?: useNoteDetailConfig) => {
     params,
     options,
   } = config ?? {};
+  const router = useRouter();
 
   return useQuery<GetDetailNoteResponse>({
     queryKey,
-    queryFn: () => apiServices.notes.getDetailNote({ params }),
+    queryFn: async () => {
+      const data = await apiServices.notes.getDetailNote({ params });
+
+      if (!data) {
+        router.replace("/404");
+      }
+
+      return data;
+    },
     ...options,
+    placeholderData: {
+      payload: {
+        id: "",
+        title: "",
+        created_at: "",
+        updated_at: "",
+      },
+    },
     refetchOnWindowFocus: false,
   });
 };
 
 export const useNoteCreate = () => {
+  const queryKey = [
+    [QUERY_KEY_NOTES.NOTES_LIST],
+    [QUERY_KEY_NOTES.NOTES_DETAIL],
+    [QUERY_KEY_NOTES.NOTES_SIDEBAR],
+  ];
+
   const queryClient = useQueryClient();
 
   return useMutation<CreateNotesResponse, Error, TCreateNotes>({
     mutationFn: (data) => apiServices.notes.createNotes({ body: data }),
     onSuccess: () => {
-      toast.success("Note created.");
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEY_NOTES.NOTES_LIST] });
+      toast.success("Note created");
+      (queryKey as QueryKey[]).map((key: QueryKey) => {
+        queryClient.invalidateQueries({ queryKey: key });
+      });
     },
   });
 };
@@ -105,7 +131,7 @@ export const useNoteUpdate = () => {
     mutationFn: (data) =>
       apiServices.notes.updateNotes({ body: data.body, params: data.params }),
     onSuccess: () => {
-      toast.success("Note updated.");
+      // toast.success("Note updated");
       (queryKey as QueryKey[]).map((key: QueryKey) => {
         queryClient.invalidateQueries({ queryKey: key });
       });
@@ -114,13 +140,20 @@ export const useNoteUpdate = () => {
 };
 
 export const useNoteDelete = () => {
+  const queryKey = [
+    [QUERY_KEY_NOTES.NOTES_LIST],
+    [QUERY_KEY_NOTES.NOTES_SIDEBAR],
+  ];
+
   const queryClient = useQueryClient();
 
   return useMutation<UpdateNotesResponse, Error, TGetNotesParams>({
     mutationFn: (data) => apiServices.notes.deleteNotes({ params: data }),
     onSuccess: () => {
-      toast.success("Note deleted.");
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEY_NOTES.NOTES_LIST] });
+      toast.success("Note deleted");
+      (queryKey as QueryKey[]).map((key: QueryKey) => {
+        queryClient.invalidateQueries({ queryKey: key });
+      });
     },
   });
 };
