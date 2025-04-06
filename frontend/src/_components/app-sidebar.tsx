@@ -41,6 +41,7 @@ import {
 } from "./ui/alert-dialog";
 import { toast } from "sonner";
 import { cn } from "~/lib/utils";
+import ThemeSwitch from "./theme-switch";
 
 export function AppSidebar() {
   const router = useRouter();
@@ -158,9 +159,12 @@ export function AppSidebar() {
     <>
       <Sidebar variant="sidebar">
         <SidebarHeader>
-          <Link href={"/"} className="py-5 text-center font-bold">
-            Notion
-          </Link>
+          <div className="container flex w-full items-center justify-between px-1">
+            <Link href={"/"} className="py-5 text-center font-bold">
+              Notion
+            </Link>
+            <ThemeSwitch />
+          </div>
         </SidebarHeader>
         <SidebarContent>
           <SidebarGroup>

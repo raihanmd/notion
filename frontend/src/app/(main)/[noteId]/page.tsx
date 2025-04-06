@@ -19,7 +19,7 @@ const Editor = dynamic(() => import("~/_components/blocks/editor"), {
 
 export default function page() {
   const params = useParams();
-  const { data } = useNoteDetail({
+  const { data, isFetching: isNoteLoading } = useNoteDetail({
     params: {
       id: params.noteId as string,
     },
@@ -52,11 +52,9 @@ export default function page() {
     setIsEditing(true);
   };
 
-  // Focus and select all text when entering edit mode
   useEffect(() => {
     if (isEditing && editableRef.current) {
       editableRef.current.focus();
-      // Select all text
       const selection = window.getSelection();
       const range = document.createRange();
       range.selectNodeContents(editableRef.current);
@@ -175,7 +173,7 @@ export default function page() {
                 onBlur={handleTitleSave}
                 onKeyDown={handleTitleKeyDown}
                 suppressContentEditableWarning={true}
-                className={cn("text-4xl font-semibold outline-none", {
+                className={cn("text-6xl font-semibold outline-none", {
                   "border-b border-gray-300 px-1": isEditing,
                 })}
               >
@@ -184,7 +182,15 @@ export default function page() {
             )}
           </div>
 
-          <Editor onChange={onEditorChange} editable />
+          {isNoteLoading ? (
+            <div className="space-y-2 pt-5">
+              {Array.from({ length: 4 }).map((_, index) => (
+                <Skeleton key={index} className="h-8 w-full" />
+              ))}
+            </div>
+          ) : (
+            <Editor onChange={onEditorChange} editable />
+          )}
         </div>
       </div>
     </>

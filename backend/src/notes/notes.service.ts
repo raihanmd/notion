@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, NotFoundException } from "@nestjs/common";
 import { CreateNoteDto, createNoteSchema } from "./dto/create-note.dto";
 import { UpdateNoteDto } from "./dto/update-note.dto";
 import { ValidationService } from "src/common/validation/validation.service";
@@ -19,7 +19,6 @@ export class NotesService {
     return await this.prismaService.note.create({
       data: {
         title: newNote.title,
-        content: newNote.content,
         user_id: userId,
       },
     });
@@ -46,14 +45,21 @@ export class NotesService {
   }
 
   async findOne(noteId: string, userId: string) {
-    return await this.prismaService.note.findUnique({
+    const note = await this.prismaService.note.findUnique({
       where: {
         id: noteId,
         user_id: userId,
         deleted_at: null,
         is_archived: false,
       },
+      include: {
+        blocks: true,
+      },
     });
+
+    if (!note) throw new NotFoundException("Note not founr");
+
+    return note;
   }
 
   async update(noteId: string, userId: string, updateNoteDto: UpdateNoteDto) {

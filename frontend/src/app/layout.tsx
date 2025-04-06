@@ -27,12 +27,7 @@ export default function RootLayout({
       <body>
         <ReactQueryProvider>
           <NextAuthProvider>
-            <ThemeProvider
-              attribute="class"
-              defaultTheme="dark"
-              enableSystem
-              disableTransitionOnChange
-            >
+            <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
               {children}
               <Toaster />
             </ThemeProvider>

@@ -1,13 +1,13 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { BlockNoteEditor, type Block } from "@blocknote/core";
-import { debounce } from "lodash";
 import { io, Socket } from "socket.io-client";
 import { useQueryClient } from "@tanstack/react-query";
-import { QUERY_KEY_NOTES } from "~/contants/query-key-notes";
-import type { GetDetailNoteResponse } from "~/api/notes";
 import { env } from "~/env";
 import { axiosInstance } from "~/lib/axios-instance";
+import { useNoteDetail } from "~/atoms/notes";
+import type { GetDetailNoteResponse } from "~/api/notes";
+import { QUERY_KEY_NOTES } from "~/contants/query-key-notes";
 
 interface BlockData {
   id?: string;
@@ -31,7 +31,7 @@ interface UseBlocksOptions {
   autosaveDelay?: number;
 }
 
-export function useBlocks({
+export function useBlocksWs({
   noteId,
   editor,
   autosave = true,
@@ -48,14 +48,18 @@ export function useBlocks({
   const socketRef = useRef<Socket | null>(null);
   const contentChangedRef = useRef(false);
   const isInitialLoadRef = useRef(true);
+  const { data, refetch } = useNoteDetail({
+    params: {
+      id: noteId,
+    },
+  });
 
-  // Initialize socket connection
   const initSocket = useCallback(() => {
     if (!session?.user) return;
 
     socketRef.current = io(`${env.NEXT_PUBLIC_API_URL}/blocks`, {
       auth: { user: session.user },
-      withCredentials: true,
+      // withCredentials: true,
       transports: ["websocket"],
     });
 
@@ -89,32 +93,33 @@ export function useBlocks({
   }, [noteId, session]);
 
   // Setup autosave when editor changes
-  useEffect(() => {
-    if (!editor || !autosave) return;
+  // useEffect(() => {
+  //   if (!editor || !autosave) return;
 
-    const debouncedSave = debounce(() => {
-      if (contentChangedRef.current) {
-        saveContent();
-      }
-    }, autosaveDelay);
+  //   const debouncedSave = debounce(() => {
+  //     if (contentChangedRef.current) {
+  //       saveContent();
+  //     }
+  //   }, autosaveDelay);
 
-    const handleEditorChange = () => {
-      contentChangedRef.current = true;
-      debouncedSave();
-    };
+  //   const handleEditorChange = () => {
+  //     contentChangedRef.current = true;
+  //     debouncedSave();
+  //   };
 
-    // Connect to editor content change event
-    const unsubscribe = editor.onChange(handleEditorChange);
+  //   // Connect to editor content change event
+  //   const unsubscribe = editor.onChange(handleEditorChange);
 
-    return () => {
-      debouncedSave.cancel();
-      unsubscribe?.();
-    };
-  }, [editor, autosave, autosaveDelay]);
+  //   return () => {
+  //     debouncedSave.cancel();
+  //     unsubscribe?.();
+  //   };
+  // }, [editor, autosave, autosaveDelay]);
 
   // Fetch blocks from API
   const fetchBlocks = async () => {
     try {
+      refetch();
       setLoading(true);
       setError(null);
 
@@ -125,7 +130,6 @@ export function useBlocks({
       const fetchedBlocks = note?.payload?.blocks || [];
       setBlocks(fetchedBlocks);
 
-      // Update editor content if editor exists and this is the initial load
       if (editor && isInitialLoadRef.current && fetchedBlocks.length > 0) {
         const blocknoteBlocks = convertToBlockNoteFormat(fetchedBlocks);
         editor.replaceBlocks(editor.topLevelBlocks, blocknoteBlocks);
@@ -139,7 +143,6 @@ export function useBlocks({
     }
   };
 
-  // Save content to API
   const saveContent = async () => {
     if (!editor) return;
 
@@ -459,11 +462,13 @@ export function useBlocks({
     lastSaved,
 
     // Methods
-    fetchBlocks,
+    // fetchBlocks,
     saveContent: forceSave,
     createBlock,
     updateBlock,
     deleteBlock,
     reorderBlocks,
+    convertFromBlockNoteFormat,
+    convertToBlockNoteFormat,
   };
 }

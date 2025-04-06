@@ -1,6 +1,7 @@
 import { type AxiosRequestConfig, type AxiosResponse } from "axios";
 import { axiosInstance } from "~/lib/axios-instance";
 import type { TGetNotesParams, TQueryParamsNotes } from "~/validation/notes";
+import type { TBlockItem } from "../blocks";
 
 export type TNotesItem = {
   id: string;
@@ -12,7 +13,7 @@ export type TNotesItem = {
   is_archived?: boolean;
   created_at: string;
   updated_at: string;
-  blocks: any[];
+  blocks: TBlockItem[];
 };
 
 export type GetNotesListResponse = {

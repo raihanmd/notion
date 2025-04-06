@@ -14,20 +14,4 @@ export class ResponseService {
       payload,
     };
   }
-
-  pagination({
-    meta,
-    payload,
-    message,
-  }: {
-    meta: any;
-    payload: any;
-    message: string;
-  }) {
-    return {
-      message,
-      payload,
-      meta,
-    };
-  }
 }
