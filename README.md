@@ -6,8 +6,6 @@ This project is a fullstack application consisting of:
 - 🌐 **Frontend** (`./frontend`) — built with [Next.js](https://nextjs.org/)
 - ⚡ Uses [Bun](https://bun.sh/) as the JavaScript runtime and package manager for both frontend and backend
 
----
-
 ## ⚒️ Prerequisites
 
 Before you begin, ensure you have the following installed:
@@ -15,8 +13,6 @@ Before you begin, ensure you have the following installed:
 - [Bun](https://bun.sh/docs/installation)
 - [PostgreSQL](https://www.postgresql.org/download/) or your preferred database (configured in `.env`)
 - Node.js (optional, but may help with Prisma binaries)
-
----
 
 ## 📂 Backend Setup (`./backend`)
 
@@ -66,8 +62,6 @@ Before you begin, ensure you have the following installed:
 
    The server should run on `http://localhost:3001` (or whatever port is set in `.env`).
 
----
-
 ## 💻 Frontend Setup (`./frontend`)
 
 1. Navigate to the frontend directory:
@@ -104,19 +98,13 @@ Before you begin, ensure you have the following installed:
 
    The app will be available at `http://localhost:3000`.
 
----
-
 ## ✅ Done!
 
 You now have both backend and frontend servers running using Bun. You can start developing and testing the application.
-
----
 
 ## 📝 Notes
 
 - For additional Prisma commands, refer to [Prisma CLI Docs](https://www.prisma.io/docs/reference/api-reference/command-reference).
 - If you're running into issues with Bun and Prisma on certain platforms, try installing the Prisma CLI globally with npm or pnpm and fallback to `npx prisma`.
-
----
 
 Happy hacking ���
