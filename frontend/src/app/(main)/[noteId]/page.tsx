@@ -1,5 +1,7 @@
 "use client";
-import { ImagePlus, SmilePlus, X } from "lucide-react";
+
+import { SmilePlus, X } from "lucide-react";
+import dynamic from "next/dynamic";
 import { useParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -10,6 +12,10 @@ import { Skeleton } from "~/_components/ui/skeleton";
 import { useNoteDetail, useNoteUpdate } from "~/atoms/notes";
 import { useDocumentTitle, useEmojiAsFavicon } from "~/hooks/common/use-head";
 import { cn } from "~/lib/utils";
+
+const Editor = dynamic(() => import("~/_components/blocks/editor"), {
+  ssr: false,
+});
 
 export default function page() {
   const params = useParams();
@@ -94,11 +100,14 @@ export default function page() {
       handleTitleSave();
     } else if (e.key === "Escape") {
       setIsEditing(false);
-      // Restore original content
       if (editableRef.current) {
         editableRef.current.textContent = data?.payload?.title || "";
       }
     }
+  };
+
+  const onEditorChange = async (content: string) => {
+    console.log(content);
   };
 
   return (
@@ -107,68 +116,75 @@ export default function page() {
       <div className="mx-auto flex flex-col items-center pt-4">
         <div className="relative aspect-video max-h-[25vh] w-full overflow-hidden rounded-xl" />
 
-        <div className="group/header w-full max-w-3xl -translate-y-7">
-          <div className="border-border mb-2 flex w-fit divide-x overflow-hidden rounded-lg border opacity-0 group-hover/header:opacity-100">
-            {!data?.payload?.icon && (
-              <IconPicker
-                onChange={(icon) => handleIconChange(icon as string)}
-                className="flex items-center gap-2 p-2"
-                asChild
-              >
-                <Button
-                  variant={"ghost"}
-                  className="rounded-none hover:scale-100"
+        <div className="relative w-full max-w-3xl px-14">
+          <div className="group/header relative">
+            <div className="border-border mb-2 flex w-fit divide-x overflow-hidden rounded-lg border opacity-0 group-hover/header:opacity-100">
+              {!data?.payload?.icon && (
+                <IconPicker
+                  onChange={(icon) => handleIconChange(icon as string)}
+                  className="flex items-center gap-2 p-2"
+                  asChild
                 >
-                  <SmilePlus />
-                  <p> Add Icon</p>
-                </Button>
-              </IconPicker>
-            )}
-            <Button variant={"ghost"} className="rounded-none hover:scale-100">
-              <ImagePlus />
-              <p>Add Cover Image</p>
-            </Button>
-          </div>
-          {data?.payload?.icon && (
-            <div className="group/icon absolute -top-2 -right-2 transition hover:scale-105">
-              <IconPicker
-                onChange={(icon) => handleIconChange(icon as string)}
-                className="flex items-center gap-2 p-2"
-                asChild
+                  <Button
+                    variant={"ghost"}
+                    className="rounded-none hover:scale-100"
+                  >
+                    <SmilePlus />
+                    <p> Add Icon</p>
+                  </Button>
+                </IconPicker>
+              )}
+              {/* <Button
+                variant={"ghost"}
+                className="rounded-none hover:scale-100"
               >
-                <div className="bg-accent group text-accent-foreground flex size-16 cursor-pointer items-center justify-center rounded-full transition-all duration-200 group-hover/header:opacity-100">
-                  <p className="text-3xl transition group-hover:opacity-60">
-                    {data?.payload?.icon}
-                  </p>
-                </div>
-              </IconPicker>
-              <Button
-                size={"icon"}
-                variant={"destructive"}
-                className="text-background absolute top-0.5 right-0.5 size-4 p-2 opacity-0 transition-all duration-200 group-hover/icon:opacity-100"
-                onClick={() => handleIconChange("")}
-              >
-                <X />
-              </Button>
+                <ImagePlus />
+                <p>Add Cover Image</p>
+              </Button> */}
             </div>
-          )}
-          {!data ? (
-            <Skeleton className="h-8 w-72" />
-          ) : (
-            <h1
-              ref={editableRef}
-              contentEditable={isEditing}
-              onDoubleClick={handleTitleDoubleClick}
-              onBlur={handleTitleSave}
-              onKeyDown={handleTitleKeyDown}
-              suppressContentEditableWarning={true}
-              className={cn("text-4xl font-semibold outline-none", {
-                "border-b border-gray-300 px-1": isEditing,
-              })}
-            >
-              {data?.payload?.title}
-            </h1>
-          )}
+            {data?.payload?.icon && (
+              <div className="group/icon absolute -top-8 right-8 transition hover:scale-105">
+                <IconPicker
+                  onChange={(icon) => handleIconChange(icon as string)}
+                  className="flex items-center gap-2 p-2"
+                  asChild
+                >
+                  <div className="bg-accent group text-accent-foreground flex size-16 cursor-pointer items-center justify-center rounded-full transition-all duration-200 group-hover/header:opacity-100">
+                    <p className="text-3xl transition group-hover:opacity-60">
+                      {data?.payload?.icon}
+                    </p>
+                  </div>
+                </IconPicker>
+                <Button
+                  size={"icon"}
+                  variant={"destructive"}
+                  className="absolute top-0.5 right-0.5 size-4 p-2 text-white opacity-0 transition-all duration-200 group-hover/icon:opacity-100"
+                  onClick={() => handleIconChange("")}
+                >
+                  <X />
+                </Button>
+              </div>
+            )}
+            {!data ? (
+              <Skeleton className="h-8 w-72" />
+            ) : (
+              <h1
+                ref={editableRef}
+                contentEditable={isEditing}
+                onDoubleClick={handleTitleDoubleClick}
+                onBlur={handleTitleSave}
+                onKeyDown={handleTitleKeyDown}
+                suppressContentEditableWarning={true}
+                className={cn("text-4xl font-semibold outline-none", {
+                  "border-b border-gray-300 px-1": isEditing,
+                })}
+              >
+                {data?.payload?.title}
+              </h1>
+            )}
+          </div>
+
+          <Editor onChange={onEditorChange} editable />
         </div>
       </div>
     </>

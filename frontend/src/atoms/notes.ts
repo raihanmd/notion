@@ -88,6 +88,7 @@ export const useNoteDetail = (config?: useNoteDetailConfig) => {
         title: "",
         created_at: "",
         updated_at: "",
+        blocks: [],
       },
     },
     refetchOnWindowFocus: false,
