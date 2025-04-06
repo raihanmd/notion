@@ -57,7 +57,7 @@ Before you begin, ensure you have the following installed:
 7. Start the NestJS server:
 
    ```bash
-   bun run start:dev
+   bun dev
    ```
 
    The server should run on `http://localhost:3001` (or whatever port is set in `.env`).
@@ -93,7 +93,7 @@ Before you begin, ensure you have the following installed:
 5. Run the development server:
 
    ```bash
-   bun run dev
+   bun dev
    ```
 
    The app will be available at `http://localhost:3000`.
