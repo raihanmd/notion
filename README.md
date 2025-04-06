@@ -2,13 +2,13 @@
 
 This project is a fullstack application consisting of:
 
-- í´§ **Backend** (`./backend`) â€” built with [NestJS](https://nestjs.com/) and [Prisma ORM](https://www.prisma.io/)
-- í¼ **Frontend** (`./frontend`) â€” built with [Next.js](https://nextjs.org/)
+- ğŸ”§ **Backend** (`./backend`) â€” built with [NestJS](https://nestjs.com/) and [Prisma ORM](https://www.prisma.io/)
+- ğŸŒ **Frontend** (`./frontend`) â€” built with [Next.js](https://nextjs.org/)
 - âš¡ Uses [Bun](https://bun.sh/) as the JavaScript runtime and package manager for both frontend and backend
 
 ---
 
-## í» ï¸ Prerequisites
+## âš’ï¸ Prerequisites
 
 Before you begin, ensure you have the following installed:
 
@@ -18,7 +18,7 @@ Before you begin, ensure you have the following installed:
 
 ---
 
-## í³‚ Backend Setup (`./backend`)
+## ğŸ“‚ Backend Setup (`./backend`)
 
 1. Navigate to the backend directory:
 
@@ -68,7 +68,7 @@ Before you begin, ensure you have the following installed:
 
 ---
 
-## í²» Frontend Setup (`./frontend`)
+## ğŸ’» Frontend Setup (`./frontend`)
 
 1. Navigate to the frontend directory:
 
@@ -112,12 +112,11 @@ You now have both backend and frontend servers running using Bun. You can start 
 
 ---
 
-## í·  Notes
+## ğŸ“ Notes
 
 - For additional Prisma commands, refer to [Prisma CLI Docs](https://www.prisma.io/docs/reference/api-reference/command-reference).
 - If you're running into issues with Bun and Prisma on certain platforms, try installing the Prisma CLI globally with npm or pnpm and fallback to `npx prisma`.
 
 ---
 
-Happy hacking íº€
-
+Happy hacking ï¿½ï¿½ï¿½
