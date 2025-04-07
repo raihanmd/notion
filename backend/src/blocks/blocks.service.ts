@@ -4,32 +4,26 @@ import {
   NotFoundException,
   ForbiddenException,
 } from "@nestjs/common";
-import { WebSocketGateway, WebSocketServer } from "@nestjs/websockets";
-import { Server } from "socket.io";
+import { Server, Socket } from "socket.io";
 import { PrismaService } from "src/common/prisma/prisma.service";
 import { ValidationService } from "src/common/validation/validation.service";
 import { CreateBlockDto, createBlockSchema } from "./dto/create-block.dto";
 import { UpdateBlockDto, updateBlockSchema } from "./dto/update-block.dto";
 import { ReorderBlockDto, reorderBlocksSchema } from "./dto/reorder-block.dto";
 
-@WebSocketGateway({
-  cors: {
-    origin: process.env.FRONTEND_URL || "http://localhost:3000",
-    credentials: true,
-  },
-  namespace: "blocks",
-})
 @Injectable()
 export class BlocksService {
-  @WebSocketServer()
-  server!: Server;
+  private server: Server | null = null;
+
+  setServer(server: Server) {
+    this.server = server;
+  }
 
   constructor(
     private readonly validationService: ValidationService,
     private readonly prismaService: PrismaService,
   ) {}
 
-  // Check if user owns the note
   private async validateNoteOwnership(noteId: string, userId: string) {
     const note = await this.prismaService.note.findUnique({
       where: { id: noteId },
@@ -45,7 +39,6 @@ export class BlocksService {
     }
   }
 
-  // Get all blocks for a note
   async getBlocksByNoteId(noteId: string, userId: string) {
     await this.validateNoteOwnership(noteId, userId);
 
@@ -72,12 +65,13 @@ export class BlocksService {
       },
     });
 
-    this.server.to(`note-${data.note_id}`).emit("blockCreated", block);
+    if (this.server) {
+      this.server.to(`note-${data.note_id}`).emit("blockCreated", block);
+    }
 
     return block;
   }
 
-  // Update a block
   async updateBlock(data: UpdateBlockDto, userId: string) {
     const updateBlock = this.validationService.validate(
       updateBlockSchema,
@@ -113,7 +107,11 @@ export class BlocksService {
       },
     });
 
-    this.server.to(`note-${block.note_id}`).emit("blockUpdated", updatedBlock);
+    if (this.server) {
+      this.server
+        .to(`note-${block.note_id}`)
+        .emit("blockUpdated", updatedBlock);
+    }
 
     return updatedBlock;
   }
@@ -146,9 +144,11 @@ export class BlocksService {
       where: { id },
     });
 
-    this.server
-      .to(`note-${block.note_id}`)
-      .emit("blockDeleted", { id, noteId: block.note_id });
+    if (this.server) {
+      this.server
+        .to(`note-${block.note_id}`)
+        .emit("blockDeleted", { id, noteId: block.note_id });
+    }
 
     return true;
   }
@@ -186,31 +186,36 @@ export class BlocksService {
       ),
     );
 
-    this.server.to(`note-${firstBlock.note_id}`).emit("blocksReordered", data);
+    if (this.server) {
+      this.server
+        .to(`note-${firstBlock.note_id}`)
+        .emit("blocksReordered", data);
+    }
 
     return true;
   }
 
-  // WebSocket methods for collaborative editing
-  // handleConnection(client: any, noteId: string, userId: string) {
-  //   client.join(`note-${noteId}`);
-  //   client.join(`user-${userId}`);
+  handleConnection(client: Socket, noteId: string, userId: string) {
+    client.join(`note-${noteId}`);
+    client.join(`user-${userId}`);
 
-  //   // Broadcast that user joined editing session
-  //   this.server.to(`note-${noteId}`).emit("userJoined", {
-  //     userId,
-  //     timestamp: new Date(),
-  //   });
-  // }
+    if (this.server) {
+      this.server.to(`note-${noteId}`).emit("userJoined", {
+        userId,
+        timestamp: new Date(),
+      });
+    }
+  }
 
-  // handleDisconnection(client: any, noteId: string, userId: string) {
-  //   client.leave(`note-${noteId}`);
-  //   client.leave(`user-${userId}`);
+  handleDisconnection(client: Socket, noteId: string, userId: string) {
+    client.leave(`note-${noteId}`);
+    client.leave(`user-${userId}`);
 
-  //   // Broadcast that user left editing session
-  //   this.server.to(`note-${noteId}`).emit("userLeft", {
-  //     userId,
-  //     timestamp: new Date(),
-  //   });
-  // }
+    if (this.server) {
+      this.server.to(`note-${noteId}`).emit("userLeft", {
+        userId,
+        timestamp: new Date(),
+      });
+    }
+  }
 }

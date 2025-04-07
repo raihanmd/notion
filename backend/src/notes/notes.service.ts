@@ -4,7 +4,7 @@ import { UpdateNoteDto } from "./dto/update-note.dto";
 import { ValidationService } from "src/common/validation/validation.service";
 import { PrismaService } from "src/common/prisma/prisma.service";
 import { QueryParamsNoteDto } from "./dto/search-note-dto";
-import { Prisma } from "@prisma/client";
+import { Prisma, SharePolicy } from "@prisma/client";
 
 @Injectable()
 export class NotesService {
@@ -48,7 +48,6 @@ export class NotesService {
     const note = await this.prismaService.note.findUnique({
       where: {
         id: noteId,
-        user_id: userId,
         deleted_at: null,
         is_archived: false,
       },
@@ -57,7 +56,11 @@ export class NotesService {
       },
     });
 
-    if (!note) throw new NotFoundException("Note not founr");
+    if (!note) throw new NotFoundException("Note not found");
+
+    if (note.share_policy === SharePolicy.PRIVATE && note.user_id !== userId) {
+      throw new NotFoundException("Note not found");
+    }
 
     return note;
   }

@@ -10,7 +10,7 @@ const Toaster = ({ ...props }) => {
     <Sonner
       closeButton
       richColors
-      position="top-right"
+      position="bottom-right"
       theme={theme === "dark" ? "dark" : "light"}
       className="toaster group"
       style={

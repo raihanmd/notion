@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { BlockNoteEditor, type Block } from "@blocknote/core";
 import { useQueryClient } from "@tanstack/react-query";
 import type { GetDetailNoteResponse } from "~/api/notes";
@@ -16,6 +16,8 @@ import {
   useBlockUpdate,
 } from "~/atoms/blocks";
 import type { TBlockItem } from "~/api/blocks";
+import { io, type Socket } from "socket.io-client";
+import { env } from "~/env";
 
 interface UseBlocksOptions {
   noteId: string;
@@ -37,6 +39,64 @@ export function useBlocks({ noteId, editor }: UseBlocksOptions) {
     convertToBlockNoteFormat(note?.blocks || []),
   );
 
+  const socketRef = useRef<Socket | null>(null);
+
+  // ! Websocket
+  useEffect(() => {
+    const socket = io(`${env.NEXT_PUBLIC_API_URL}/blocks`, {
+      withCredentials: true,
+    });
+
+    socketRef.current = socket;
+
+    socket.on("connect", () => {
+      console.log("Connected to WS", socket.id);
+      socket.emit("joinNote", { noteId });
+    });
+
+    socket.on("blockChanged", (data) => {
+      console.log("Received block change", data);
+    });
+
+    socket.emit("joinNote", { noteId });
+
+    socket.on("joinedNote", (data) => {
+      console.log("Joined Note:", data.noteId);
+    });
+
+    socket.on("blockCreated", (block) => {
+      console.log("Block created", block);
+    });
+
+    socket.on("blockUpdated", ({ block, socketId: senderId }) => {
+      if (senderId === socket.id) return;
+
+      console.log("Block updated", block);
+    });
+
+    socket.on("blockDeleted", ({ id }) => {
+      console.log("Block deleted", id);
+    });
+
+    socket.on("blocksReordered", (blocks) => {
+      console.log("Blocks reordered", blocks);
+    });
+
+    socket.on("userJoined", ({ userId }) => {
+      console.log("User joined:", userId);
+    });
+
+    socket.on("userLeft", ({ userId }) => {
+      console.log("User left:", userId);
+    });
+
+    return () => {
+      socket.emit("leaveNote", { noteId });
+      socket.disconnect();
+    };
+  }, [noteId]);
+
+  // ! HTTP
   useEffect(() => {
     if (note?.blocks) {
       editor?.replaceBlocks(editor?.document, blocks);

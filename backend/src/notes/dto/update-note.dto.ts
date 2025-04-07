@@ -1,4 +1,10 @@
-import { PartialType } from "@nestjs/mapped-types";
-import { CreateNoteDto } from "./create-note.dto";
+import { CreateNoteDto, createNoteSchema } from "./create-note.dto";
+import { z } from "zod";
+import { SharePolicy } from "@prisma/client";
 
-export class UpdateNoteDto extends PartialType(CreateNoteDto) {}
+export type UpdateNoteDto = Partial<CreateNoteDto> &
+  z.infer<typeof updateNoteSchema>;
+
+export const updateNoteSchema = createNoteSchema.extend({
+  share_policy: z.nativeEnum(SharePolicy).optional(),
+});

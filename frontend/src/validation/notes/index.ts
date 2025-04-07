@@ -15,6 +15,7 @@ const createNotesValidationSchema = z.object({
   icon: z.string().optional(),
   is_archived: z.boolean().optional(),
   is_published: z.boolean().optional(),
+  share_policy: z.string().optional(),
 });
 
 const queryParamsNotesValidationSchema = z.object({

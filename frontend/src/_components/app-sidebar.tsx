@@ -1,5 +1,12 @@
 "use client";
-import { CirclePlus, Trash2, MoreHorizontal, Pencil } from "lucide-react";
+
+import {
+  CirclePlus,
+  Trash2,
+  MoreHorizontal,
+  Pencil,
+  LogOut,
+} from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -42,8 +49,12 @@ import {
 import { toast } from "sonner";
 import { cn } from "~/lib/utils";
 import ThemeSwitch from "./theme-switch";
+import { useSession } from "next-auth/react";
+import { WavingEmoji } from "./ui/waing-emoji";
+import { logout } from "~/action/logout";
 
 export function AppSidebar() {
+  const session = useSession();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -58,7 +69,6 @@ export function AppSidebar() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [noteToDelete, setNoteToDelete] = useState<string | null>(null);
 
-  // Map of refs for each editable title
   const editableRefs = useRef<Map<string, HTMLSpanElement>>(new Map());
 
   const handleCreateNote = async () => {
@@ -104,7 +114,6 @@ export function AppSidebar() {
       handleTitleSave(id);
     } else if (e.key === "Escape") {
       setEditingId(null);
-      // Reset to original title
       const item = data?.payload?.find((note) => note.id === id);
       if (item && editableRefs.current.get(id)) {
         const editableElement = editableRefs.current.get(id);
@@ -133,7 +142,6 @@ export function AppSidebar() {
     }
   };
 
-  // Set up focus and selection when editing starts
   useEffect(() => {
     if (editingId) {
       const editableElement = editableRefs.current.get(editingId);
@@ -148,7 +156,6 @@ export function AppSidebar() {
     }
   }, [editingId]);
 
-  // Store the ref for each editable element
   const setEditableRef = (id: string, element: HTMLSpanElement | null) => {
     if (element) {
       editableRefs.current.set(id, element);
@@ -161,7 +168,7 @@ export function AppSidebar() {
         <SidebarHeader>
           <div className="container flex w-full items-center justify-between px-1">
             <Link href={"/"} className="py-5 text-center font-bold">
-              Notion
+              <WavingEmoji /> Hello {session.data?.user?.name}
             </Link>
             <ThemeSwitch />
           </div>
@@ -173,7 +180,6 @@ export function AppSidebar() {
                 onClick={handleCreateNote}
                 disabled={isPending}
                 className="items-center"
-                variant={"outline"}
               >
                 <CirclePlus className="h-4 w-4" />
                 <span className="text-sm">New note</span>
@@ -288,6 +294,17 @@ export function AppSidebar() {
                       </SidebarMenuItem>
                     ))}
               </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+          <SidebarGroup>
+            <SidebarGroupContent>
+              <SidebarMenuButton
+                onClick={() => logout()}
+                className="items-center"
+              >
+                <LogOut className="h-4 w-4" />
+                <span className="text-sm">Logout</span>
+              </SidebarMenuButton>
             </SidebarGroupContent>
           </SidebarGroup>
         </SidebarContent>

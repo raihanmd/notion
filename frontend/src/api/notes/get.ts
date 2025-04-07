@@ -13,6 +13,7 @@ export type TNotesItem = {
   is_archived?: boolean;
   created_at: string;
   updated_at: string;
+  share_policy: string;
   blocks: TBlockItem[];
 };
 
