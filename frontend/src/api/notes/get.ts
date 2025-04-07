@@ -15,6 +15,10 @@ export type TNotesItem = {
   updated_at: string;
   share_policy: string;
   blocks: TBlockItem[];
+  user: {
+    id: string;
+    username: string;
+  };
 };
 
 export type GetNotesListResponse = {

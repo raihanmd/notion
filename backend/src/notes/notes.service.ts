@@ -53,6 +53,12 @@ export class NotesService {
       },
       include: {
         blocks: true,
+        user: {
+          select: {
+            id: true,
+            username: true,
+          },
+        },
       },
     });
 

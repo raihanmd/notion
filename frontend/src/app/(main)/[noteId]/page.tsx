@@ -1,5 +1,4 @@
 "use client";
-
 import { SmilePlus, X } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useParams } from "next/navigation";
@@ -15,10 +14,18 @@ import { cn } from "~/lib/utils";
 
 const Editor = dynamic(() => import("~/_components/blocks/editor"), {
   ssr: false,
+  loading: () => (
+    <div className="space-y-2 pt-5">
+      {Array.from({ length: 4 }).map((_, index) => (
+        <Skeleton key={index} className="h-8 w-full" />
+      ))}
+    </div>
+  ),
 });
 
 export default function page() {
   const params = useParams();
+  const [isMounted, setIsMounted] = useState(false);
   const { data, isFetching: isNoteLoading } = useNoteDetail({
     params: {
       id: params.noteId as string,
@@ -51,6 +58,10 @@ export default function page() {
   const handleTitleDoubleClick = () => {
     setIsEditing(true);
   };
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   useEffect(() => {
     if (isEditing && editableRef.current) {
@@ -102,10 +113,6 @@ export default function page() {
         editableRef.current.textContent = data?.payload?.title || "";
       }
     }
-  };
-
-  const onEditorChange = async (content: string) => {
-    console.log(content);
   };
 
   return (
@@ -188,8 +195,14 @@ export default function page() {
                 <Skeleton key={index} className="h-8 w-full" />
               ))}
             </div>
+          ) : isMounted ? (
+            <Editor editable />
           ) : (
-            <Editor onChange={onEditorChange} editable />
+            <div className="space-y-2 pt-5">
+              {Array.from({ length: 4 }).map((_, index) => (
+                <Skeleton key={index} className="h-8 w-full" />
+              ))}
+            </div>
           )}
         </div>
       </div>

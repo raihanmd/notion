@@ -23,8 +23,10 @@ import { Copy, Link, LockKeyhole, Users } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
+import { useSession } from "next-auth/react";
 
 export default function Navbar() {
+  const { data: session } = useSession();
   const queryClient = useQueryClient();
   const [openSharePolicy, setOpenSharePolicy] = useState<boolean>(false);
   const [selectedSharePolicy, setSelectedSharePolicy] =
@@ -159,19 +161,21 @@ export default function Navbar() {
             </p>
           )}
         </div>
-        <Button
-          variant={"outline"}
-          className="rounded-full"
-          iconPlacement="left"
-          icon={
-            sharePolicyIcon[
-              note?.payload?.share_policy || "PRIVATE"
-            ] as React.ElementType
-          }
-          onClick={() => setOpenSharePolicy(true)}
-        >
-          {sharePolicyMap[note?.payload?.share_policy || "PRIVATE"]}
-        </Button>
+        {session?.user?.id === note?.payload?.user?.id && (
+          <Button
+            variant={"outline"}
+            className="rounded-full"
+            iconPlacement="left"
+            icon={
+              sharePolicyIcon[
+                note?.payload?.share_policy || "PRIVATE"
+              ] as React.ElementType
+            }
+            onClick={() => setOpenSharePolicy(true)}
+          >
+            {sharePolicyMap[note?.payload?.share_policy || "PRIVATE"]}
+          </Button>
+        )}
       </div>
 
       <AlertDialog open={openSharePolicy} onOpenChange={setOpenSharePolicy}>

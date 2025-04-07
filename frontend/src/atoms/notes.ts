@@ -88,7 +88,12 @@ export const useNoteDetail = (config?: useNoteDetailConfig) => {
         title: "",
         created_at: "",
         updated_at: "",
+        share_policy: "",
         blocks: [],
+        user: {
+          id: "",
+          username: "",
+        },
       },
     },
     refetchOnWindowFocus: false,

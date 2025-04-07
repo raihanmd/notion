@@ -1,4 +1,3 @@
-// blocks.service.ts
 import {
   Injectable,
   NotFoundException,
@@ -10,6 +9,8 @@ import { ValidationService } from "src/common/validation/validation.service";
 import { CreateBlockDto, createBlockSchema } from "./dto/create-block.dto";
 import { UpdateBlockDto, updateBlockSchema } from "./dto/update-block.dto";
 import { ReorderBlockDto, reorderBlocksSchema } from "./dto/reorder-block.dto";
+import { SharePolicy } from "@prisma/client";
+import { z } from "zod";
 
 @Injectable()
 export class BlocksService {
@@ -27,93 +28,113 @@ export class BlocksService {
   private async validateNoteOwnership(noteId: string, userId: string) {
     const note = await this.prismaService.note.findUnique({
       where: { id: noteId },
-      select: { user_id: true },
+      select: { user_id: true, share_policy: true },
     });
 
     if (!note) {
       throw new NotFoundException("Note not found");
     }
 
-    if (note.user_id !== userId) {
-      throw new ForbiddenException("You do not have access to this note");
+    if (note.share_policy === SharePolicy.PRIVATE && note.user_id !== userId) {
+      throw new NotFoundException("Note not found");
     }
   }
 
   async getBlocksByNoteId(noteId: string, userId: string) {
     await this.validateNoteOwnership(noteId, userId);
-
-    const blocks = await this.prismaService.block.findMany({
+    return this.prismaService.block.findMany({
       where: { note_id: noteId },
       orderBy: { position: "asc" },
+    });
+  }
+
+  async createBlock(data: CreateBlockDto, userId: string) {
+    const newBlock = this.validationService.validate(createBlockSchema, data);
+    await this.validateNoteOwnership(newBlock.note_id, userId);
+
+    const block = await this.prismaService.block.create({
+      data: newBlock,
+    });
+
+    this.server?.to(`note-${newBlock.note_id}`).emit("blockCreated", block);
+    return block;
+  }
+
+  async createManyBlocks(data: CreateBlockDto[], userId: string) {
+    const validated = this.validationService.validate(
+      z.array(createBlockSchema),
+      data,
+    );
+
+    const noteId = validated[0].note_id;
+    await this.validateNoteOwnership(noteId, userId);
+
+    await this.prismaService.block.createMany({
+      data: validated,
+    });
+
+    const blocks = await this.prismaService.block.findMany({
+      where: {
+        id: {
+          in: validated.map((b) => b.id),
+        },
+      },
     });
 
     return blocks;
   }
 
-  async createBlock(data: CreateBlockDto, userId: string) {
-    const newBlock = this.validationService.validate(createBlockSchema, data);
-    await this.validateNoteOwnership(data.note_id, userId);
-
-    const block = await this.prismaService.block.create({
-      data: {
-        note_id: newBlock.note_id,
-        parent_id: newBlock.parent_id,
-        type: newBlock.type,
-        content: newBlock.content,
-        props: newBlock.props,
-        position: newBlock.position,
-      },
-    });
-
-    if (this.server) {
-      this.server.to(`note-${data.note_id}`).emit("blockCreated", block);
-    }
-
-    return block;
-  }
-
   async updateBlock(data: UpdateBlockDto, userId: string) {
-    const updateBlock = this.validationService.validate(
-      updateBlockSchema,
-      data,
-    );
+    const validated = this.validationService.validate(updateBlockSchema, data);
 
     const block = await this.prismaService.block.findUnique({
-      where: { id: updateBlock.id },
+      where: { id: validated.id },
       include: { note: true },
     });
 
-    if (!block) {
-      throw new NotFoundException("Block not found");
-    }
-
-    if (block.note.user_id !== userId) {
-      throw new ForbiddenException("You do not have access to this block");
-    }
+    if (!block) throw new NotFoundException("Block not found");
+    await this.validateNoteOwnership(block.note_id, userId);
 
     const updatedBlock = await this.prismaService.block.update({
-      where: { id: data.id },
+      where: { id: validated.id },
       data: {
-        parent_id:
-          data.parent_id !== undefined ? data.parent_id : block.parent_id,
-        type: data.type || block.type,
-        content: {
-          toJSON: () => data.content || block.content,
-        },
+        parent_id: validated.parent_id ?? block.parent_id,
+        type: validated.type ?? block.type,
+        content: validated.content ?? block.content,
         props: {
-          toJSON: () => data.props || block.props,
+          toJSON: () => validated.props ?? block.props,
         },
-        position: data.position !== undefined ? data.position : block.position,
+        position: validated.position ?? block.position,
       },
     });
 
-    if (this.server) {
-      this.server
-        .to(`note-${block.note_id}`)
-        .emit("blockUpdated", updatedBlock);
-    }
-
     return updatedBlock;
+  }
+
+  async updateManyBlocks(data: UpdateBlockDto[], userId: string) {
+    const validated = this.validationService.validate(
+      z.array(updateBlockSchema),
+      data,
+    );
+
+    await this.validateNoteOwnership(data[0].note_id, userId);
+
+    const updatedBlocks = await this.prismaService.$transaction(
+      validated.map((blockDto) =>
+        this.prismaService.block.update({
+          where: { id: blockDto.id },
+          data: {
+            parent_id: blockDto.parent_id,
+            type: blockDto.type,
+            content: blockDto.content,
+            props: blockDto.props,
+            position: blockDto.position,
+          },
+        }),
+      ),
+    );
+
+    return updatedBlocks;
   }
 
   async deleteBlock(id: string, userId: string) {
@@ -122,57 +143,59 @@ export class BlocksService {
       include: { note: true },
     });
 
-    if (!block) {
-      throw new NotFoundException("Block not found");
-    }
-
-    if (block.note.user_id !== userId) {
+    if (!block) throw new NotFoundException("Block not found");
+    if (block.note.user_id !== userId)
       throw new ForbiddenException("You do not have access to this block");
-    }
 
-    const childBlocks = await this.prismaService.block.findMany({
-      where: { parent_id: id },
+    await this.prismaService.$transaction([
+      this.prismaService.block.deleteMany({ where: { parent_id: id } }),
+      this.prismaService.block.delete({ where: { id } }),
+    ]);
+
+    this.server?.to(`note-${block.note_id}`).emit("blockDeleted", {
+      id,
+      noteId: block.note_id,
     });
-
-    if (childBlocks.length > 0) {
-      await this.prismaService.block.deleteMany({
-        where: { parent_id: id },
-      });
-    }
-
-    await this.prismaService.block.delete({
-      where: { id },
-    });
-
-    if (this.server) {
-      this.server
-        .to(`note-${block.note_id}`)
-        .emit("blockDeleted", { id, noteId: block.note_id });
-    }
 
     return true;
+  }
+
+  async deleteManyBlocks(ids: string[], userId: string) {
+    const blocks = await this.prismaService.block.findFirst({
+      where: { id: { in: ids } },
+      include: {
+        note: {
+          select: {
+            id: true,
+          },
+        },
+      },
+    });
+
+    if (!blocks) throw new NotFoundException("Block not found");
+
+    await this.validateNoteOwnership(blocks.note_id, userId);
+
+    await this.prismaService.block.deleteMany({ where: { id: { in: ids } } });
+
+    return ids;
   }
 
   async reorderBlocks(data: ReorderBlockDto, userId: string) {
     this.validationService.validate(reorderBlocksSchema, data);
 
-    if (data.length === 0) {
-      return true;
-    }
+    if (data.length === 0) return true;
 
-    const firstBlockId = data[0].id;
-    const firstBlock = await this.prismaService.block.findUnique({
-      where: { id: firstBlockId },
-      include: { note: true },
-    });
+    const noteId = (
+      await this.prismaService.block.findUnique({
+        where: { id: data[0].id },
+        include: { note: true },
+      })
+    )?.note.id;
 
-    if (!firstBlock) {
-      throw new NotFoundException("Block not found");
-    }
+    if (!noteId) throw new NotFoundException("Note not found");
 
-    if (firstBlock.note.user_id !== userId) {
-      throw new ForbiddenException("You do not have access to these blocks");
-    }
+    await this.validateNoteOwnership(noteId, userId);
 
     await this.prismaService.$transaction(
       data.map((block) =>
@@ -180,42 +203,41 @@ export class BlocksService {
           where: { id: block.id },
           data: {
             position: block.position,
-            parent_id: block.parentId ? block.parentId : undefined,
+            parent_id: block.parentId ?? undefined,
           },
         }),
       ),
     );
 
-    if (this.server) {
-      this.server
-        .to(`note-${firstBlock.note_id}`)
-        .emit("blocksReordered", data);
-    }
+    return data;
+  }
 
-    return true;
+  async findByNoteId(noteId: string, userId: string) {
+    await this.validateNoteOwnership(noteId, userId);
+
+    return this.prismaService.block.findMany({
+      where: { note_id: noteId },
+      orderBy: { position: "asc" },
+    });
   }
 
   handleConnection(client: Socket, noteId: string, userId: string) {
     client.join(`note-${noteId}`);
     client.join(`user-${userId}`);
 
-    if (this.server) {
-      this.server.to(`note-${noteId}`).emit("userJoined", {
-        userId,
-        timestamp: new Date(),
-      });
-    }
+    this.server?.to(`note-${noteId}`).emit("userJoined", {
+      userId,
+      timestamp: new Date(),
+    });
   }
 
   handleDisconnection(client: Socket, noteId: string, userId: string) {
     client.leave(`note-${noteId}`);
     client.leave(`user-${userId}`);
 
-    if (this.server) {
-      this.server.to(`note-${noteId}`).emit("userLeft", {
-        userId,
-        timestamp: new Date(),
-      });
-    }
+    this.server?.to(`note-${noteId}`).emit("userLeft", {
+      userId,
+      timestamp: new Date(),
+    });
   }
 }

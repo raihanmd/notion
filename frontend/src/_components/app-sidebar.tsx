@@ -187,7 +187,11 @@ export function AppSidebar() {
             </SidebarGroupContent>
           </SidebarGroup>
           <SidebarGroup>
-            <SidebarGroupLabel>Your notes</SidebarGroupLabel>
+            <SidebarGroupLabel>
+              {data?.payload?.length! > 0
+                ? "Your notes"
+                : "You dont have any notes"}
+            </SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 {!data || isLoading
@@ -310,7 +314,6 @@ export function AppSidebar() {
         </SidebarContent>
       </Sidebar>
 
-      {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
