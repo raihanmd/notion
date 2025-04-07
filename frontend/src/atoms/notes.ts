@@ -31,6 +31,9 @@ export const useNotesListSidebar = (config?: useNotesListSidebarConfig) => {
     queryKey,
     queryFn: () => apiServices.notes.getNotes({}),
     ...options,
+    placeholderData: {
+      payload: [],
+    },
     refetchOnWindowFocus: false,
   });
 };
@@ -52,6 +55,9 @@ export const useNotesList = (config?: useNotesListConfig) => {
     queryKey,
     queryFn: () => apiServices.notes.getNotes({ params }),
     ...options,
+    placeholderData: {
+      payload: [],
+    },
     refetchOnWindowFocus: false,
   });
 };
