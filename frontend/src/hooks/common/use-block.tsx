@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { BlockNoteEditor, type Block } from "@blocknote/core";
 import { useQueryClient } from "@tanstack/react-query";
 import type { GetDetailNoteResponse } from "~/api/notes";
@@ -10,8 +10,6 @@ import {
 } from "~/lib/block";
 import { io, type Socket } from "socket.io-client";
 import { env } from "~/env";
-import { blocksAtom, useBlocksAtom } from "~/atoms/blocks";
-import { useHydrateAtoms } from "jotai/react/utils";
 
 interface UseBlocksOptions {
   noteId: string;
@@ -24,11 +22,9 @@ export function useBlocks({ noteId, editor }: UseBlocksOptions) {
     QUERY_KEY_NOTES.NOTES_DETAIL,
   ])?.payload;
 
-  const initialBlocks = convertToBlockNoteFormat(note?.blocks || []);
-
-  useHydrateAtoms([[blocksAtom, initialBlocks]]);
-
-  const [blocks, setBlocks] = useBlocksAtom();
+  const [blocks, setBlocks] = useState<Block[]>(
+    convertToBlockNoteFormat(note?.blocks || []),
+  );
 
   const socketRef = useRef<Socket | null>(null);
 

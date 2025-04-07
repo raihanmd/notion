@@ -35,7 +35,7 @@ export class BlocksGateway
   server!: Server;
 
   private readonly logger = new Logger(BlocksGateway.name);
-  private notesMember = new Map<string, string[]>(); // noteId -> array of clientIds
+  private notesMember = new Map<string, string[]>();
 
   constructor(
     private readonly blocksService: BlocksService,
@@ -98,7 +98,6 @@ export class BlocksGateway
       const user = client.data.user;
       const noteId = String(data.noteId);
 
-      // 1. Cek dulu apakah client sudah ada di note lain
       for (const [existingNoteId, clients] of this.notesMember.entries()) {
         if (clients.includes(client.id)) {
           client.leave(`note-${existingNoteId}`);
@@ -129,7 +128,12 @@ export class BlocksGateway
       this.logger.log(
         `Client ${client.id} (User: ${user.id}) joined note: ${noteId}`,
       );
-      return { event: "joinedNote", data: { noteId } };
+
+      const blocks = await this.blocksService.getBlocksByNoteId(
+        noteId,
+        user.id,
+      );
+      return { event: "joinedNote", data: { blocks } };
     } catch (error: any) {
       throw new WsException(error.message);
     }
