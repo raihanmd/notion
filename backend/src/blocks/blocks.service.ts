@@ -222,22 +222,16 @@ export class BlocksService {
   }
 
   handleConnection(client: Socket, noteId: string, userId: string) {
-    client.join(`note-${noteId}`);
-    client.join(`user-${userId}`);
-
     this.server?.to(`note-${noteId}`).emit("userJoined", {
       userId,
-      timestamp: new Date(),
+      clientId: client.id,
     });
   }
 
   handleDisconnection(client: Socket, noteId: string, userId: string) {
-    client.leave(`note-${noteId}`);
-    client.leave(`user-${userId}`);
-
     this.server?.to(`note-${noteId}`).emit("userLeft", {
       userId,
-      timestamp: new Date(),
+      clientId: client.id,
     });
   }
 }

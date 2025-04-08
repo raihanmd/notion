@@ -1,15 +1,13 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { BlockNoteEditor, type Block } from "@blocknote/core";
-import { useQueryClient } from "@tanstack/react-query";
-import type { GetDetailNoteResponse } from "~/api/notes";
-import { QUERY_KEY_NOTES } from "~/contants/query-key-notes";
 import {
   convertFromBlockNoteFormat,
   convertToBlockNoteFormat,
 } from "~/lib/block";
 import { io, type Socket } from "socket.io-client";
 import { env } from "~/env";
+import { useBlocksAtom } from "~/atoms/blocks";
 
 interface UseBlocksOptions {
   noteId: string;
@@ -17,14 +15,7 @@ interface UseBlocksOptions {
 }
 
 export function useBlocks({ noteId, editor }: UseBlocksOptions) {
-  const queryClient = useQueryClient();
-  const note = queryClient.getQueryData<GetDetailNoteResponse>([
-    QUERY_KEY_NOTES.NOTES_DETAIL,
-  ])?.payload;
-
-  const [blocks, setBlocks] = useState<Block[]>(
-    convertToBlockNoteFormat(note?.blocks || []),
-  );
+  const [blocks, setBlocks] = useBlocksAtom(noteId);
 
   const socketRef = useRef<Socket | null>(null);
 
@@ -43,7 +34,7 @@ export function useBlocks({ noteId, editor }: UseBlocksOptions) {
     socket.emit("joinNote", { noteId });
 
     socket.on("joinedNote", (data) => {
-      console.log("Joined Note:", data.noteId);
+      setBlocks(convertToBlockNoteFormat(data.blocks || []));
     });
 
     socket.on("blocksCreated", (newBlocks) => {
@@ -97,10 +88,16 @@ export function useBlocks({ noteId, editor }: UseBlocksOptions) {
   }, [noteId]);
 
   useEffect(() => {
-    if (note?.blocks) {
-      editor?.replaceBlocks(editor.document, blocks);
+    if (editor && blocks) {
+      editor.replaceBlocks(editor.document, blocks);
     }
-  }, [note, editor, blocks]);
+  }, [editor, blocks]);
+
+  useEffect(() => {
+    return () => {
+      setBlocks([]);
+    };
+  }, [noteId]);
 
   const handleEditorChange = async () => {
     if (!editor) return;

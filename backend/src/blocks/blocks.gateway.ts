@@ -35,7 +35,7 @@ export class BlocksGateway
   server!: Server;
 
   private readonly logger = new Logger(BlocksGateway.name);
-  private notesMember = new Map<string, string[]>();
+  private notesMember = new Map<string, (User & { client_id: string })[]>();
 
   constructor(
     private readonly blocksService: BlocksService,
@@ -53,16 +53,16 @@ export class BlocksGateway
 
       const cookies = cookie.parse(rawCookie);
       const token = cookies["token"];
-
       if (!token) throw new Error("No token provided");
 
       const user = jwt.verify(
         token,
         this.configService.get("JWT_SECRET")!,
       ) as User;
-      client.data.user = user;
 
+      client.data.user = user;
       client.join(`user-${user.id}`);
+
       this.logger.log(`Client connected: ${client.id}, User: ${user.id}`);
     } catch (err: any) {
       this.logger.warn(`Client ${client.id} disconnected: ${err.message}`);
@@ -71,22 +71,25 @@ export class BlocksGateway
   }
 
   async handleDisconnect(client: Socket) {
-    this.logger.log(`Client disconnected: ${client.id}`);
     const user = client.data.user;
     if (!user) return;
 
-    for (const [noteId, clients] of this.notesMember.entries()) {
-      if (clients.includes(client.id)) {
-        this.notesMember.set(
-          noteId,
-          clients.filter((id) => id !== client.id),
-        );
+    for (const [noteId, members] of this.notesMember.entries()) {
+      const stillJoined = members.some(
+        (member) => member.client_id === client.id,
+      );
+      if (stillJoined) {
+        const updated = members.filter((m) => m.client_id !== client.id);
+        this.notesMember.set(noteId, updated);
+
         this.blocksService.handleDisconnection(client, noteId, user.id);
         this.logger.log(
           `Client ${client.id} (User: ${user.id}) disconnected from note: ${noteId}`,
         );
       }
     }
+
+    this.logger.log(`Client disconnected: ${client.id}`);
   }
 
   @SubscribeMessage("joinNote")
@@ -98,36 +101,29 @@ export class BlocksGateway
       const user = client.data.user;
       const noteId = String(data.noteId);
 
-      for (const [existingNoteId, clients] of this.notesMember.entries()) {
-        if (clients.includes(client.id)) {
-          client.leave(`note-${existingNoteId}`);
-          this.notesMember.set(
-            existingNoteId,
-            clients.filter((id) => id !== client.id),
-          );
-
+      for (const [existingNoteId, members] of this.notesMember.entries()) {
+        const updated = members.filter((m) => m.client_id !== client.id);
+        if (updated.length !== members.length) {
+          this.notesMember.set(existingNoteId, updated);
           this.blocksService.handleDisconnection(
             client,
             existingNoteId,
             user.id,
           );
-          this.logger.log(
-            `Client ${client.id} (User: ${user.id}) left note: ${existingNoteId} to join ${noteId}`,
-          );
         }
       }
 
       client.join(`note-${noteId}`);
+      const currentMembers = this.notesMember.get(noteId) || [];
+      currentMembers.push({ ...user, client_id: client.id });
+      this.notesMember.set(noteId, currentMembers);
 
-      const noteMembers = this.notesMember.get(noteId) || [];
-      noteMembers.push(client.id);
-      this.notesMember.set(noteId, noteMembers);
+      const memberIds = currentMembers.map((m) => m.username).join(", ");
+      this.logger.log(
+        `User ${user.id} joined note ${noteId}. Current members: [${memberIds}]`,
+      );
 
       this.blocksService.handleConnection(client, noteId, user.id);
-
-      this.logger.log(
-        `Client ${client.id} (User: ${user.id}) joined note: ${noteId}`,
-      );
 
       const blocks = await this.blocksService.getBlocksByNoteId(
         noteId,
@@ -151,14 +147,10 @@ export class BlocksGateway
       client.leave(`note-${noteId}`);
 
       const clients = this.notesMember.get(noteId) || [];
-      const updated = clients.filter((id) => id !== client.id);
+      const updated = clients.filter((m) => m.client_id !== client.id);
       this.notesMember.set(noteId, updated);
 
       this.blocksService.handleDisconnection(client, noteId, user.id);
-
-      this.logger.log(
-        `Client ${client.id} (User: ${user.id}) left note: ${noteId}`,
-      );
       return { event: "leftNote", data: { noteId } };
     } catch (error: any) {
       throw new WsException(error.message);
@@ -175,7 +167,6 @@ export class BlocksGateway
         payload.blocks,
         client.data.user.id,
       );
-
       this.server.to(`note-${payload.noteId}`).emit("blocksCreated", block);
     } catch (error: any) {
       throw new WsException(error.message);
@@ -192,7 +183,6 @@ export class BlocksGateway
         payload.blocks,
         client.data.user.id,
       );
-
       this.server.to(`note-${payload.noteId}`).emit("blocksUpdated", block);
     } catch (error: any) {
       throw new WsException(error.message);
@@ -209,7 +199,6 @@ export class BlocksGateway
         payload.blocks,
         client.data.user.id,
       );
-
       this.server.to(`note-${payload.noteId}`).emit("blocksDeleted", block);
     } catch (error: any) {
       throw new WsException(error.message);
@@ -226,7 +215,6 @@ export class BlocksGateway
         payload.blocks,
         client.data.user.id,
       );
-
       this.server.to(`note-${payload.noteId}`).emit("blocksReordered", block);
     } catch (error: any) {
       throw new WsException(error.message);
